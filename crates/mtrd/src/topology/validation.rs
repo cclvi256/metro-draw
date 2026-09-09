@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use thiserror::Error;
 
-use crate::{MetroTopology, TopologyStation, topology_layout::Bounds};
+use super::{MetroTopology, TopologyStation, layout::Bounds};
 
 /// An error encountered while rendering a metro topology.
 #[derive(Debug, Error, PartialEq)]

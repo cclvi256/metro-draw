@@ -1,6 +1,13 @@
+mod layout;
+mod render;
+mod validation;
+
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{LocalizedNames, manifest_format::inline_yaml_positions};
+
+pub use render::render_topology_svg;
+pub use validation::{TopologyRenderError, validate_topology};
 
 /// An entire metro topology manifest.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

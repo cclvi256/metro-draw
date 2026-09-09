@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 use std::fmt::Write;
 
-use crate::{
+use super::{
     MetroTopology, TopologyPath, TopologyStation,
-    topology_layout::Bounds,
-    topology_validation::{TopologyRenderError, station_index, validate_topology},
+    layout::Bounds,
+    validation::{TopologyRenderError, station_index, validate_topology},
 };
 
 const LINE_WIDTH: f64 = 8.0;
