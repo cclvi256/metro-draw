@@ -2,9 +2,13 @@
 
 ## Project Structure & Module Organization
 
-This Rust 2024 workspace contains `crates/metro-draw`. `src/lib.rs` is the public facade; topology and schematic models live in `src/topology.rs` and `src/schematic.rs`. Layout, validation, and rendering live in the `src/topology_*.rs` modules. `src/main.rs` is the thin `mtrd` CLI adapter. Tests are colocated under `#[cfg(test)]`.
+This Rust 2024 workspace contains `crates/mtrd`. `src/lib.rs` is the public facade; topology and schematic models live in `src/topology.rs` and `src/schematic.rs`, with responsibility-specific children under `src/topology/` and `src/schematic/`. `src/main.rs` is the thin `mtrd` CLI adapter. Tests are colocated under `#[cfg(test)]`.
 
 `README.md` documents the CLI and manifest contract. `docs/` contains design notes, including proposed schematic-map APIs that are not yet implemented, while `images/` holds documentation graphics. `target/`, `tmp/`, and `examples/` are ignored build, scratch, and output paths.
+
+Files named `v1.md`, `v2.md`, and so on inside a design-note directory are
+revisions of that document. Their numbers are unrelated to the Cargo
+workspace/package version and must not be used to infer a release version.
 
 ## Build, Test, and Development Commands
 
@@ -20,7 +24,7 @@ Run `cargo fmt --all` before the check-only commands when code has changed.
 
 ## Coding Style & Naming Conventions
 
-Use standard rustfmt output and four-space indentation. Follow Rust naming conventions: `snake_case` for modules, functions, and tests; `PascalCase` for types and error variants; `SCREAMING_SNAKE_CASE` for constants. Prefer typed `thiserror` errors and preserve their sources. Keep schema, validation, and rendering behavior in the library; CLI code should handle arguments, files, and user-facing output only.
+Use standard rustfmt output and four-space indentation. Follow Rust naming conventions: `snake_case` for modules, functions, and tests; `PascalCase` for types and error variants; `SCREAMING_SNAKE_CASE` for constants. Order Rust declarations and imports as: `mod` declarations, `use std::…`, dependency imports, `use crate::…`, `use super::…`, then `use self::…` (omitting `self::` when idiomatic). Keep each import group separated by a blank line. Prefer typed `thiserror` errors and preserve their sources. Keep schema, validation, and rendering behavior in the library; CLI code should handle arguments, files, and user-facing output only.
 
 YAML is the primary human-edited format and JSON is equivalent interchange. Keep Serde schemas strict. Positions must remain two-element `[x, y]` arrays, and `names[locale][0]` is the canonical label.
 
