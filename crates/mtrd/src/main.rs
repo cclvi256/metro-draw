@@ -4,11 +4,12 @@ use std::process::ExitCode;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use clap::{ArgAction, Parser, Subcommand};
+use thiserror::Error;
+
 use mtrd::{
     MetroTopology, SchematicManifest, SchematicRenderError, TopologyRenderError,
     render_schematic_svg, render_topology_svg, validate_schematic, validate_topology,
 };
-use thiserror::Error;
 
 #[derive(Debug, Parser)]
 #[command(name = "mtrd", version, about = "Work with metro manifests")]

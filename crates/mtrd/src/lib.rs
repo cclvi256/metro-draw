@@ -8,12 +8,7 @@
 
 mod manifest_format;
 mod schematic;
-mod schematic_render;
-mod schematic_validation;
 mod topology;
-mod topology_layout;
-mod topology_render;
-mod topology_validation;
 
 use std::collections::BTreeMap;
 
@@ -22,15 +17,15 @@ pub use schematic::{
     SchematicCommonStationOptions, SchematicCommonStationStroke, SchematicCorner,
     SchematicInterchangePort, SchematicInterchangeStationFill, SchematicInterchangeStationOptions,
     SchematicInterchangeStationStroke, SchematicLength, SchematicLine, SchematicLineOptions,
-    SchematicManifest, SchematicOptions, SchematicPath, SchematicPoint, SchematicRouteVisit,
-    SchematicStation, SchematicStationColor, SchematicStationOptions, SchematicStationPort,
-    SchematicStationSymbol, SchematicStrokeAlignment, SchematicValueError,
+    SchematicManifest, SchematicOptions, SchematicPath, SchematicPoint, SchematicRenderError,
+    SchematicRouteVisit, SchematicStation, SchematicStationColor, SchematicStationOptions,
+    SchematicStationPort, SchematicStationSymbol, SchematicStrokeAlignment, SchematicValueError,
+    render_schematic_svg, validate_schematic,
 };
-pub use schematic_render::render_schematic_svg;
-pub use schematic_validation::{SchematicRenderError, validate_schematic};
-pub use topology::{MetroTopology, TopologyLine, TopologyPath, TopologyPosition, TopologyStation};
-pub use topology_render::render_topology_svg;
-pub use topology_validation::{TopologyRenderError, validate_topology};
+pub use topology::{
+    MetroTopology, TopologyLine, TopologyPath, TopologyPosition, TopologyRenderError,
+    TopologyStation, render_topology_svg, validate_topology,
+};
 
 /// Names indexed by a locale such as `en` or `zh-CN`.
 ///
