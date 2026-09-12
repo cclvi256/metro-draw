@@ -368,7 +368,7 @@ mod tests {
         TopologyCommonStationOptions, TopologyCommonStationStroke, TopologyCoordinateOptions,
         TopologyGeographicAxes, TopologyInterchangeStationFill, TopologyInterchangeStationOptions,
         TopologyInterchangeStationStroke, TopologyLabelOptions, TopologyLength, TopologyLine,
-        TopologyLineOptions, TopologyOptions, TopologyPath, TopologyPosition,
+        TopologyLineOptions, TopologyOptions, TopologyPath, TopologyPosition, TopologyScale,
         TopologyStationOptions,
     };
 
@@ -382,6 +382,7 @@ mod tests {
             lines: TopologyLineOptions {
                 width: TopologyLength::new(8.0).unwrap(),
             },
+            scale: TopologyScale::new(80.0).unwrap(),
             stations: TopologyStationOptions {
                 common: TopologyCommonStationOptions {
                     fill: TopologyCommonStationFill {

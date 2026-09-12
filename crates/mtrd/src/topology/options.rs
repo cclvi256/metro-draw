@@ -9,6 +9,8 @@ pub struct TopologyOptions {
     pub coordinates: TopologyCoordinateOptions,
     pub labels: TopologyLabelOptions,
     pub lines: TopologyLineOptions,
+    #[serde(default)]
+    pub scale: TopologyScale,
     pub stations: TopologyStationOptions,
 }
 
@@ -272,11 +274,58 @@ impl<'de> Deserialize<'de> for TopologyLength {
     }
 }
 
+/// A finite, strictly positive multiplier applied to projected coordinates.
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
+pub struct TopologyScale(f64);
+
+impl TopologyScale {
+    /// Construct a finite, strictly positive coordinate scale.
+    pub fn new(value: f64) -> Result<Self, TopologyValueError> {
+        if !value.is_finite() || value <= 0.0 {
+            return Err(TopologyValueError::InvalidScale(value));
+        }
+
+        Ok(Self(value))
+    }
+
+    pub const fn get(self) -> f64 {
+        self.0
+    }
+}
+
+impl Default for TopologyScale {
+    fn default() -> Self {
+        Self(1.0)
+    }
+}
+
+impl Serialize for TopologyScale {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        self.0.serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for TopologyScale {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let value = f64::deserialize(deserializer)?;
+        Self::new(value).map_err(serde::de::Error::custom)
+    }
+}
+
 /// A scalar invariant violation while constructing topology rendering values.
 #[derive(Debug, Clone, Copy, PartialEq, thiserror::Error)]
 pub enum TopologyValueError {
     #[error("topology length must be finite and strictly positive, got {0}")]
     InvalidLength(f64),
+
+    #[error("topology scale must be finite and strictly positive, got {0}")]
+    InvalidScale(f64),
 }
 
 /// An opaque colour or a transparent map background.

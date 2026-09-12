@@ -1,6 +1,5 @@
 use super::{MetroTopology, TopologyCoordinateOptions, TopologyPosition, TopologyStation};
 
-const CARTESIAN_SCALE: f64 = 80.0;
 const EARTH_MEAN_RADIUS_METRES: f64 = 6_371_008.8;
 const PADDING: f64 = 48.0;
 const LABEL_SPACE: f64 = 160.0;
@@ -67,9 +66,11 @@ impl Bounds {
 enum Projection {
     Cartesian {
         coordinates: TopologyCoordinateOptions,
+        scale: f64,
     },
     Geographic {
         coordinates: TopologyCoordinateOptions,
+        scale: f64,
         center_longitude_radians: f64,
         center_latitude_radians: f64,
     },
@@ -78,8 +79,11 @@ enum Projection {
 impl Projection {
     fn from_topology(topology: &MetroTopology) -> Option<Self> {
         let coordinates = topology.options.coordinates;
+        let scale = topology.options.scale.get();
         match coordinates {
-            TopologyCoordinateOptions::Cartesian { .. } => Some(Self::Cartesian { coordinates }),
+            TopologyCoordinateOptions::Cartesian { .. } => {
+                Some(Self::Cartesian { coordinates, scale })
+            }
             TopologyCoordinateOptions::Geographic { .. } => {
                 let mut longitude_bounds = None::<(f64, f64)>;
                 let mut latitude_bounds = None::<(f64, f64)>;
@@ -97,6 +101,7 @@ impl Projection {
                 (center_longitude_radians.is_finite() && center_latitude_radians.is_finite())
                     .then_some(Self::Geographic {
                         coordinates,
+                        scale,
                         center_longitude_radians,
                         center_latitude_radians,
                     })
@@ -106,20 +111,20 @@ impl Projection {
 
     fn scale(self) -> f64 {
         match self {
-            Self::Cartesian { .. } => CARTESIAN_SCALE,
-            Self::Geographic { .. } => 1.0,
+            Self::Cartesian { scale, .. } | Self::Geographic { scale, .. } => scale,
         }
     }
 
     fn project(self, position: TopologyPosition) -> Option<(f64, f64)> {
         let projected = match self {
-            Self::Cartesian { coordinates } => {
+            Self::Cartesian { coordinates, .. } => {
                 coordinates.canonical_cartesian(position.x, position.y)?
             }
             Self::Geographic {
                 coordinates,
                 center_longitude_radians,
                 center_latitude_radians,
+                ..
             } => {
                 let (longitude, latitude) =
                     coordinates.longitude_latitude(position.x, position.y)?;
@@ -155,8 +160,8 @@ mod tests {
         TopologyCommonStationOptions, TopologyCommonStationStroke, TopologyGeographicAxes,
         TopologyInterchangeStationFill, TopologyInterchangeStationOptions,
         TopologyInterchangeStationStroke, TopologyLabelOptions, TopologyLength,
-        TopologyLineOptions, TopologyOptions, TopologyStationColor, TopologyStationOptions,
-        TopologyStrokeAlignment,
+        TopologyLineOptions, TopologyOptions, TopologyScale, TopologyStationColor,
+        TopologyStationOptions, TopologyStrokeAlignment,
     };
 
     fn topology(coordinates: TopologyCoordinateOptions, positions: &[(f64, f64)]) -> MetroTopology {
@@ -168,6 +173,7 @@ mod tests {
                 lines: TopologyLineOptions {
                     width: TopologyLength::new(8.0).unwrap(),
                 },
+                scale: TopologyScale::default(),
                 stations: TopologyStationOptions {
                     common: TopologyCommonStationOptions {
                         fill: TopologyCommonStationFill {
@@ -233,6 +239,21 @@ mod tests {
     }
 
     #[test]
+    fn uses_unit_scale_for_cartesian_coordinates_by_default() {
+        let topology = topology(
+            TopologyCoordinateOptions::Cartesian {
+                axes: TopologyCartesianAxes::RightDown,
+            },
+            &[(0.0, 0.0), (2.0, 3.0)],
+        );
+        let bounds = Bounds::from_topology(&topology).unwrap();
+        let first = bounds.project(&topology.stations[0]).unwrap();
+        let second = bounds.project(&topology.stations[1]).unwrap();
+
+        assert_eq!((second.0 - first.0, second.1 - first.1), (2.0, 3.0));
+    }
+
+    #[test]
     fn normalizes_every_geographic_orientation() {
         let cases = [
             (TopologyGeographicAxes::EastNorth, (-118.0, 34.0)),
@@ -272,6 +293,39 @@ mod tests {
         assert!((east_north.0 - west_south.0 - expected_width).abs() < 1e-6);
         assert!((west_south.1 - east_north.1 - expected_height).abs() < 1e-6);
         assert_eq!(east_north.1, PADDING);
+    }
+
+    #[test]
+    fn applies_configured_scale_to_cartesian_and_geographic_coordinates() {
+        let mut cartesian = topology(
+            TopologyCoordinateOptions::Cartesian {
+                axes: TopologyCartesianAxes::RightDown,
+            },
+            &[(0.0, 0.0), (2.0, 3.0)],
+        );
+        cartesian.options.scale = TopologyScale::new(3.0).unwrap();
+        let bounds = Bounds::from_topology(&cartesian).unwrap();
+        let first = bounds.project(&cartesian.stations[0]).unwrap();
+        let second = bounds.project(&cartesian.stations[1]).unwrap();
+
+        assert_eq!((second.0 - first.0, second.1 - first.1), (6.0, 9.0));
+
+        let mut geographic = topology(
+            TopologyCoordinateOptions::Geographic {
+                axes: TopologyGeographicAxes::EastNorth,
+            },
+            &[(10.0, 59.0), (12.0, 61.0)],
+        );
+        geographic.options.scale = TopologyScale::new(3.0).unwrap();
+        let bounds = Bounds::from_topology(&geographic).unwrap();
+        let west_south = bounds.project(&geographic.stations[0]).unwrap();
+        let east_north = bounds.project(&geographic.stations[1]).unwrap();
+        let expected_width =
+            3.0 * EARTH_MEAN_RADIUS_METRES * 60_f64.to_radians().cos() * 2_f64.to_radians();
+        let expected_height = 3.0 * EARTH_MEAN_RADIUS_METRES * 2_f64.to_radians();
+
+        assert!((east_north.0 - west_south.0 - expected_width).abs() < 1e-6);
+        assert!((west_south.1 - east_north.1 - expected_height).abs() < 1e-6);
     }
 
     #[test]

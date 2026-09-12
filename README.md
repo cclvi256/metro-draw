@@ -71,9 +71,9 @@ validation. With `check -vv`, it prints the detailed Rust debug representation.
 
 `MetroTopology` supports strict YAML and equivalent JSON serialisation through
 `from_yaml`, `to_yaml`, `from_json`, and `to_json`. Its global `options` set
-the coordinate system, either an opaque background `color` or `transparent:
-true`, the width of line strokes, and the fill and stroke styling of common and
-interchange stations.
+the coordinate system and scale, either an opaque background `color` or
+`transparent: true`, the width of line strokes, and the fill and stroke styling
+of common and interchange stations.
 
 Topology coordinates default to Cartesian coordinates with rightward `x` and
 downward `y` axes. The whole `coordinates` mapping may be omitted on input, and
@@ -87,12 +87,26 @@ options:
     axes: r-d
 ```
 
+The global coordinate scale defaults to `1.0` and may be overridden alongside
+the other global options. It multiplies projected station coordinates for both
+coordinate systems:
+
+```yaml
+options:
+  scale: 3.0
+```
+
+The scale must be finite and strictly positive. It changes coordinate spacing,
+but does not multiply line widths or station styling lengths. Canonical YAML
+and JSON always include the resolved scale, including when it was omitted on
+input.
+
 Cartesian axes may be `r-d`, `r-u`, `l-d`, `l-u`, `d-r`, `d-l`, `u-r`, or
 `u-l`. Each letter gives the positive direction of the corresponding value in
-the station's `[x, y]` position. Cartesian positions retain the renderer's
-existing scale of 80 SVG units per coordinate unit. The corrected default
-renders positive `y` downwards; use explicit `axes: r-u` to preserve the
-orientation produced for omitted options by older versions.
+the station's `[x, y]` position. At the default scale, one Cartesian coordinate
+unit is one SVG user unit. The corrected default renders positive `y`
+downwards; use explicit `axes: r-u` to preserve the orientation produced for
+omitted options by older versions.
 
 Geographic positions are longitude and latitude values whose order and signs
 are selected in the same way:
@@ -113,8 +127,9 @@ average as the centre, and applies a local equirectangular projection with the
 IUGG mean Earth radius of `6,371,008.8 m`. Longitude is scaled by the cosine of
 the centre latitude. The north-west projected boundary becomes `(0, 0)` in the
 renderer's right/down coordinate system. Antimeridian wrapping is not applied.
-One metre is one SVG user unit, so topology line widths and common/interchange
-station fill and stroke lengths are metres for geographic maps.
+At the default scale, one projected metre is one SVG user unit. Topology line
+widths and common/interchange station fill and stroke lengths remain SVG user
+units when the coordinate scale is changed.
 
 Canonical YAML and JSON always include `coordinates`, `type`, and the resolved
 `axes`, including when defaults were omitted on input.

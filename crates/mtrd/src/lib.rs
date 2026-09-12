@@ -28,8 +28,8 @@ pub use topology::{
     TopologyGeographicAxes, TopologyInterchangeStationFill, TopologyInterchangeStationOptions,
     TopologyInterchangeStationStroke, TopologyLabelOptions, TopologyLength, TopologyLine,
     TopologyLineOptions, TopologyOptions, TopologyPath, TopologyPosition, TopologyRenderError,
-    TopologyStation, TopologyStationColor, TopologyStationOptions, TopologyStrokeAlignment,
-    TopologyValueError, render_topology_svg, validate_topology,
+    TopologyScale, TopologyStation, TopologyStationColor, TopologyStationOptions,
+    TopologyStrokeAlignment, TopologyValueError, render_topology_svg, validate_topology,
 };
 
 /// Names indexed by a locale such as `en` or `zh-CN`.

@@ -12,8 +12,8 @@ pub use options::{
     TopologyCommonStationOptions, TopologyCommonStationStroke, TopologyCoordinateOptions,
     TopologyGeographicAxes, TopologyInterchangeStationFill, TopologyInterchangeStationOptions,
     TopologyInterchangeStationStroke, TopologyLabelOptions, TopologyLength, TopologyLineOptions,
-    TopologyOptions, TopologyStationColor, TopologyStationOptions, TopologyStrokeAlignment,
-    TopologyValueError,
+    TopologyOptions, TopologyScale, TopologyStationColor, TopologyStationOptions,
+    TopologyStrokeAlignment, TopologyValueError,
 };
 pub use render::render_topology_svg;
 pub use validation::{TopologyRenderError, validate_topology};
@@ -194,6 +194,7 @@ lines:
             }
         );
         assert_eq!(topology.options.lines.width.get(), 8.0);
+        assert_eq!(topology.options.scale.get(), 1.0);
         assert_eq!(
             topology.options.coordinates,
             TopologyCoordinateOptions::Cartesian {
@@ -219,6 +220,7 @@ lines:
         assert!(encoded.contains("position: [90.0, 20.0]"));
         assert!(!encoded.contains("position:\n"));
         assert!(encoded.contains("  coordinates:\n    type: cartesian\n    axes: r-d"));
+        assert!(encoded.contains("  scale: 1.0"));
     }
 
     #[test]
@@ -350,6 +352,25 @@ lines:
         for invalid in ["0.0", "-1.0", ".inf", ".nan"] {
             let yaml = TOPOLOGY_YAML.replace("    width: 8.0", &format!("    width: {invalid}"));
 
+            assert!(MetroTopology::from_yaml(&yaml).is_err());
+        }
+    }
+
+    #[test]
+    fn accepts_coordinate_scale_and_rejects_invalid_values() {
+        let scaled = MetroTopology::from_yaml(
+            &TOPOLOGY_YAML.replace("  labels:", "  scale: 3.0\n  labels:"),
+        )
+        .unwrap();
+        let canonical: serde_yaml::Value =
+            serde_yaml::from_str(&scaled.to_yaml().unwrap()).unwrap();
+
+        assert_eq!(scaled.options.scale.get(), 3.0);
+        assert_eq!(canonical["options"]["scale"], 3.0);
+
+        for invalid in ["0.0", "-1.0", ".inf", ".nan"] {
+            let yaml =
+                TOPOLOGY_YAML.replace("  labels:", &format!("  scale: {invalid}\n  labels:"));
             assert!(MetroTopology::from_yaml(&yaml).is_err());
         }
     }
