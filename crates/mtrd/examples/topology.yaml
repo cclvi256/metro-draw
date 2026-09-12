@@ -1,0 +1,151 @@
+options:
+  background:
+    color: '#FFFFFF'
+  coordinates:
+    type: cartesian
+    axes: r-d
+  labels:
+    hidden: true
+  lines:
+    width: 5.0
+  scale: 1.0
+  stations:
+    common:
+      fill:
+        diameter: 6.25
+        color:
+          type: unified
+          value: '#FFFFFF'
+      stroke:
+        width: 1.25
+        alignment: outside
+        color:
+          type: follow-line
+    interchange:
+      fill:
+        width: 7.5
+        color: '#FFFFFF'
+      stroke:
+        width: 1.25
+        alignment: outside
+        color: '#000000'
+stations:
+- id: north
+  names:
+    en:
+    - North
+  position: [304.0, 0.0]
+- id: upper-west
+  names:
+    en:
+    - Upper West
+  position: [279.0, 150.0]
+- id: upper-east
+  names:
+    en:
+    - Upper East
+  position: [483.0, 150.0]
+- id: far-west
+  names:
+    en:
+    - Far West
+  position: [0.0, 307.0]
+- id: west
+  names:
+    en:
+    - West
+  position: [131.0, 308.0]
+- id: centre-west
+  names:
+    en:
+    - Centre West
+  position: [280.0, 304.0]
+- id: centre
+  names:
+    en:
+    - Centre
+  position: [428.0, 317.0]
+- id: centre-east
+  names:
+    en:
+    - Centre East
+  position: [584.0, 315.0]
+- id: far-east
+  names:
+    en:
+    - Far East
+  position: [754.0, 323.0]
+- id: lower-centre
+  names:
+    en:
+    - Lower Centre
+  position: [341.0, 402.0]
+- id: lower-west
+  names:
+    en:
+    - Lower West
+  position: [286.0, 480.0]
+- id: lower-east
+  names:
+    en:
+    - Lower East
+  position: [484.0, 464.0]
+- id: south-west
+  names:
+    en:
+    - South West
+  position: [228.0, 557.0]
+- id: south-east
+  names:
+    en:
+    - South East
+  position: [649.0, 533.0]
+lines:
+- id: green
+  names:
+    en:
+    - Green Line
+  color: '#15C76F'
+  paths:
+  - stations:
+    - north
+    - upper-west
+    - centre-west
+    - lower-centre
+    - lower-east
+    - south-east
+    closed: false
+- id: orange
+  names:
+    en:
+    - Orange Line
+  color: '#FFAE00'
+  paths:
+  - stations:
+    - far-west
+    - west
+    - centre-west
+    - centre
+    - centre-east
+    - far-east
+    closed: false
+  - stations:
+    - centre
+    - lower-centre
+    - lower-west
+    - south-west
+    closed: false
+- id: blue-loop
+  names:
+    en:
+    - Blue Loop
+  color: '#0795ED'
+  paths:
+  - stations:
+    - west
+    - upper-west
+    - upper-east
+    - centre-east
+    - lower-east
+    - lower-west
+    closed: true

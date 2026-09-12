@@ -14,6 +14,13 @@ mtrd -V
 mtrd convert map.yaml map.json
 mtrd convert map.json map.yaml
 
+# Print a bundled example manifest. The short aliases shown are equivalent.
+mtrd example topology
+mtrd example topo
+mtrd example t
+mtrd example schematic
+mtrd example s
+
 # Check topology syntax, schema, and renderability.
 mtrd check -t topology.yaml
 
@@ -48,6 +55,8 @@ It validates that:
 - every station referenced by a line path exists;
 - both coordinates of every station are finite and within the renderer's
   supported numeric range;
+- geographic longitudes are within `[-180, 180]` and latitudes are within
+  `[-90, 90]` after applying the configured axes;
 - an open path contains at least two stations;
 - a closed path contains at least three stations; and
 - a station occurs at most once in a single path.
@@ -69,8 +78,77 @@ validation. With `check -vv`, it prints the detailed Rust debug representation.
 
 `MetroTopology` supports strict YAML and equivalent JSON serialisation through
 `from_yaml`, `to_yaml`, `from_json`, and `to_json`. Its global `options` set
-either an opaque background `color` or `transparent: true`, the width of line
-strokes, and the fill and stroke styling of common and interchange stations.
+the coordinate system and scale, either an opaque background `color` or
+`transparent: true`, the width of line strokes, and the fill and stroke styling
+of common and interchange stations.
+
+Topology `background`, `coordinates`, `labels`, and `scale` may all be omitted
+on input. Their defaults are an opaque `#FFFFFF` background, Cartesian
+coordinates with rightward `x` and downward `y` axes, visible labels
+(`hidden: false`), and a scale of `1.0`. Canonical YAML and JSON include these
+resolved values.
+
+The whole `coordinates` mapping may be omitted, and `axes` may be omitted when
+`type` is present. If the mapping is present, `type` is required:
+
+```yaml
+options:
+  coordinates:
+    type: cartesian
+    axes: r-d
+```
+
+The global coordinate scale defaults to `1.0` and may be overridden alongside
+the other global options. It multiplies projected station coordinates for both
+coordinate systems:
+
+```yaml
+options:
+  scale: 3.0
+```
+
+The scale must be finite and strictly positive. It multiplies coordinate
+spacing, line widths, and common/interchange station fill and stroke lengths.
+Canonical YAML and JSON always include the resolved scale, including when it
+was omitted on input.
+
+Cartesian axes may be `r-d`, `r-u`, `l-d`, `l-u`, `d-r`, `d-l`, `u-r`, or
+`u-l`. Each letter gives the positive direction of the corresponding value in
+the station's `[x, y]` position. At the default scale, one Cartesian coordinate
+unit is one SVG user unit. The corrected default renders positive `y`
+downwards; use explicit `axes: r-u` to preserve the orientation produced for
+omitted options by older versions.
+
+Geographic positions are longitude and latitude values whose order and signs
+are selected in the same way:
+
+```yaml
+options:
+  coordinates:
+    type: geographic
+    axes: e-n
+```
+
+Geographic axes may be `e-n`, `e-s`, `w-n`, `w-s`, `n-e`, `n-w`, `s-e`, or
+`s-w`; `e-n` is the default. For example, Los Angeles is approximately
+`[-118.0, 34.0]` with `e-n` and `[34.0, 118.0]` with `n-w`.
+
+The renderer finds the direct numeric longitude and latitude bounds, uses their
+average as the centre, and applies a local equirectangular projection with the
+IUGG mean Earth radius of `6,371,008.8 m`. Longitude is scaled by the cosine of
+the centre latitude. The north-west projected boundary becomes `(0, 0)` in the
+renderer's right/down coordinate system. Antimeridian wrapping is not applied.
+At the default scale, one projected metre is one SVG user unit. Geographic
+topology line widths and common/interchange station fill and stroke lengths are
+also specified in metres and converted to SVG user units by the global scale.
+
+Canonical YAML and JSON always include `coordinates`, `type`, and the resolved
+`axes`, including when defaults were omitted on input.
+
+The bundled topology example contains an ordinary line, a branched line, and a
+loop line. Print it with `mtrd example topology`, or inspect
+[`crates/mtrd/examples/topology.yaml`](crates/mtrd/examples/topology.yaml).
+
 An explicit `transparent: false` may accompany a background colour and
 `colour` is accepted on input; canonical output uses `color` and omits the
 redundant transparency field. A coloured background is rendered across the
@@ -110,5 +188,5 @@ library. The `mtrd render -s` CLI is a thin file adapter around that API and
 uses the same output naming options as topology rendering. It draws line
 strokes, rounded explicit corners, circles, and oriented interchange capsules;
 labels, legends, titles, and line marks remain deferred.
-[`examples/schematic.yaml`](examples/schematic.yaml) is a representative
-semantic manifest.
+[`crates/mtrd/examples/schematic.yaml`](crates/mtrd/examples/schematic.yaml) is
+a representative semantic manifest.

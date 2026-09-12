@@ -8,11 +8,12 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use crate::{LocalizedNames, manifest_format::inline_yaml_positions};
 
 pub use options::{
-    TopologyBackgroundOptions, TopologyCommonStationFill, TopologyCommonStationOptions,
-    TopologyCommonStationStroke, TopologyInterchangeStationFill, TopologyInterchangeStationOptions,
+    TopologyBackgroundOptions, TopologyCartesianAxes, TopologyCommonStationFill,
+    TopologyCommonStationOptions, TopologyCommonStationStroke, TopologyCoordinateOptions,
+    TopologyGeographicAxes, TopologyInterchangeStationFill, TopologyInterchangeStationOptions,
     TopologyInterchangeStationStroke, TopologyLabelOptions, TopologyLength, TopologyLineOptions,
-    TopologyOptions, TopologyStationColor, TopologyStationOptions, TopologyStrokeAlignment,
-    TopologyValueError,
+    TopologyOptions, TopologyScale, TopologyStationColor, TopologyStationOptions,
+    TopologyStrokeAlignment, TopologyValueError,
 };
 pub use render::render_topology_svg;
 pub use validation::{TopologyRenderError, validate_topology};
@@ -35,7 +36,7 @@ pub struct TopologyStation {
     pub position: TopologyPosition,
 }
 
-/// A point in the topology's abstract Cartesian coordinate system.
+/// A point in the topology's configured coordinate system.
 ///
 /// It is serialized and deserialized as `[x, y]`.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -193,6 +194,13 @@ lines:
             }
         );
         assert_eq!(topology.options.lines.width.get(), 8.0);
+        assert_eq!(topology.options.scale.get(), 1.0);
+        assert_eq!(
+            topology.options.coordinates,
+            TopologyCoordinateOptions::Cartesian {
+                axes: TopologyCartesianAxes::RightDown
+            }
+        );
         assert!(!topology.options.labels.hidden);
         assert_eq!(
             topology.options.stations.common.stroke.alignment,
@@ -211,6 +219,8 @@ lines:
         assert!(encoded.contains("position: [10.0, 20.0]"));
         assert!(encoded.contains("position: [90.0, 20.0]"));
         assert!(!encoded.contains("position:\n"));
+        assert!(encoded.contains("  coordinates:\n    type: cartesian\n    axes: r-d"));
+        assert!(encoded.contains("  scale: 1.0"));
     }
 
     #[test]
@@ -347,10 +357,125 @@ lines:
     }
 
     #[test]
+    fn accepts_coordinate_scale_and_rejects_invalid_values() {
+        let scaled = MetroTopology::from_yaml(
+            &TOPOLOGY_YAML.replace("  labels:", "  scale: 3.0\n  labels:"),
+        )
+        .unwrap();
+        let canonical: serde_yaml::Value =
+            serde_yaml::from_str(&scaled.to_yaml().unwrap()).unwrap();
+
+        assert_eq!(scaled.options.scale.get(), 3.0);
+        assert_eq!(canonical["options"]["scale"], 3.0);
+
+        for invalid in ["0.0", "-1.0", ".inf", ".nan"] {
+            let yaml =
+                TOPOLOGY_YAML.replace("  labels:", &format!("  scale: {invalid}\n  labels:"));
+            assert!(MetroTopology::from_yaml(&yaml).is_err());
+        }
+    }
+
+    #[test]
+    fn applies_defaults_for_omitted_topology_options() {
+        let yaml = TOPOLOGY_YAML
+            .replace("  background:\n    color: '#ffffff'\n", "")
+            .replace("  labels:\n    hidden: false\n", "");
+        let topology = MetroTopology::from_yaml(&yaml).unwrap();
+        let canonical: serde_yaml::Value =
+            serde_yaml::from_str(&topology.to_yaml().unwrap()).unwrap();
+
+        assert_eq!(
+            topology.options.background,
+            TopologyBackgroundOptions::Color {
+                color: "#FFFFFF".to_owned()
+            }
+        );
+        assert_eq!(
+            topology.options.coordinates,
+            TopologyCoordinateOptions::default()
+        );
+        assert_eq!(topology.options.labels, TopologyLabelOptions::default());
+        assert_eq!(topology.options.scale, TopologyScale::default());
+        assert_eq!(canonical["options"]["background"]["color"], "#FFFFFF");
+        assert_eq!(canonical["options"]["coordinates"]["type"], "cartesian");
+        assert_eq!(canonical["options"]["coordinates"]["axes"], "r-d");
+        assert_eq!(canonical["options"]["labels"]["hidden"], false);
+        assert_eq!(canonical["options"]["scale"], 1.0);
+
+        let empty_labels = yaml.replace("  lines:", "  labels: {}\n  lines:");
+        assert_eq!(
+            MetroTopology::from_yaml(&empty_labels)
+                .unwrap()
+                .options
+                .labels,
+            TopologyLabelOptions::default()
+        );
+    }
+
+    #[test]
     fn rejects_unknown_or_non_boolean_label_options() {
         for invalid in ["    visible: false", "    hidden: 'false'"] {
             let yaml = TOPOLOGY_YAML.replace("    hidden: false", invalid);
 
+            assert!(MetroTopology::from_yaml(&yaml).is_err());
+        }
+    }
+
+    #[test]
+    fn applies_type_specific_coordinate_axis_defaults() {
+        let geographic = MetroTopology::from_yaml(&TOPOLOGY_YAML.replace(
+            "  labels:",
+            "  coordinates:\n    type: geographic\n  labels:",
+        ))
+        .unwrap();
+        assert_eq!(
+            geographic.options.coordinates,
+            TopologyCoordinateOptions::Geographic {
+                axes: TopologyGeographicAxes::EastNorth
+            }
+        );
+        let canonical: serde_yaml::Value =
+            serde_yaml::from_str(&geographic.to_yaml().unwrap()).unwrap();
+        assert_eq!(canonical["options"]["coordinates"]["type"], "geographic");
+        assert_eq!(canonical["options"]["coordinates"]["axes"], "e-n");
+    }
+
+    #[test]
+    fn accepts_every_coordinate_axis_token() {
+        for (coordinate_type, axes) in [
+            (
+                "cartesian",
+                ["r-d", "r-u", "l-d", "l-u", "d-r", "d-l", "u-r", "u-l"],
+            ),
+            (
+                "geographic",
+                ["e-n", "e-s", "w-n", "w-s", "n-e", "n-w", "s-e", "s-w"],
+            ),
+        ] {
+            for axes in axes {
+                let yaml = TOPOLOGY_YAML.replace(
+                    "  labels:",
+                    &format!(
+                        "  coordinates:\n    type: {coordinate_type}\n    axes: {axes}\n  labels:"
+                    ),
+                );
+                assert!(MetroTopology::from_yaml(&yaml).is_ok());
+            }
+        }
+    }
+
+    #[test]
+    fn rejects_invalid_coordinate_options() {
+        for coordinates in [
+            "    axes: r-d",
+            "    type: cartesian\n    axes: e-n",
+            "    type: geographic\n    axes: r-d",
+            "    type: geographic\n    axes: e-n\n    unexpected: true",
+        ] {
+            let yaml = TOPOLOGY_YAML.replace(
+                "  labels:",
+                &format!("  coordinates:\n{coordinates}\n  labels:"),
+            );
             assert!(MetroTopology::from_yaml(&yaml).is_err());
         }
     }

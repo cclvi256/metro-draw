@@ -12,20 +12,21 @@ const TAPER_LENGTH: f64 = 24.0;
 
 /// Render a topology as an SVG topology graph.
 ///
-/// Manifest positions are treated as Cartesian coordinates, so increasing
-/// `y` is rendered upwards. Each line path is drawn in its configured color;
-/// closed paths are joined back to their first station.
+/// Manifest positions are converted from their configured coordinate system
+/// to rightward and downward axes before rendering. Each line path is drawn in
+/// its configured color; closed paths are joined back to their first station.
 pub fn render_topology_svg(topology: &MetroTopology) -> Result<String, TopologyRenderError> {
     validate_topology(topology)?;
     let stations = station_index(topology)?;
     let station_lines = station_lines(topology);
     let segment_lanes = segment_lanes(topology);
-    let line_width = topology.options.lines.width.get();
+    let scale = topology.options.scale.get();
+    let line_width = topology.options.lines.width.get() * scale;
     let lane_spacing = lane_spacing(line_width);
     if !lane_spacing.is_finite() {
         return Err(TopologyRenderError::CoordinateRange);
     }
-    let bounds = Bounds::from_topology(topology);
+    let bounds = Bounds::from_topology(topology).ok_or(TopologyRenderError::CoordinateRange)?;
     let (width, height) = bounds
         .viewport()
         .ok_or(TopologyRenderError::CoordinateRange)?;
@@ -128,19 +129,19 @@ pub fn render_topology_svg(topology: &MetroTopology) -> Result<String, TopologyR
         let (diameter, fill, stroke, stroke_width, stroke_alignment) = if line_indexes.len() > 1 {
             let options = &topology.options.stations.interchange;
             (
-                options.fill.width.get().max(line_width),
+                (options.fill.width.get() * scale).max(line_width),
                 options.fill.color.as_str(),
                 options.stroke.color.as_str(),
-                options.stroke.width.get(),
+                options.stroke.width.get() * scale,
                 options.stroke.alignment,
             )
         } else {
             let options = &topology.options.stations.common;
             (
-                options.fill.diameter.get().max(line_width),
+                (options.fill.diameter.get() * scale).max(line_width),
                 station_color(topology, line_indexes, &options.fill.color),
                 station_color(topology, line_indexes, &options.stroke.color),
-                options.stroke.width.get(),
+                options.stroke.width.get() * scale,
                 options.stroke.alignment,
             )
         };
@@ -364,11 +365,12 @@ fn xml_escape(value: &str) -> String {
 mod tests {
     use super::*;
     use crate::{
-        TopologyBackgroundOptions, TopologyCommonStationFill, TopologyCommonStationOptions,
-        TopologyCommonStationStroke, TopologyInterchangeStationFill,
-        TopologyInterchangeStationOptions, TopologyInterchangeStationStroke, TopologyLabelOptions,
-        TopologyLength, TopologyLine, TopologyLineOptions, TopologyOptions, TopologyPath,
-        TopologyPosition, TopologyStationOptions,
+        TopologyBackgroundOptions, TopologyCartesianAxes, TopologyCommonStationFill,
+        TopologyCommonStationOptions, TopologyCommonStationStroke, TopologyCoordinateOptions,
+        TopologyGeographicAxes, TopologyInterchangeStationFill, TopologyInterchangeStationOptions,
+        TopologyInterchangeStationStroke, TopologyLabelOptions, TopologyLength, TopologyLine,
+        TopologyLineOptions, TopologyOptions, TopologyPath, TopologyPosition, TopologyScale,
+        TopologyStationOptions,
     };
 
     fn options() -> TopologyOptions {
@@ -376,10 +378,12 @@ mod tests {
             background: TopologyBackgroundOptions::Color {
                 color: "#abcdef".into(),
             },
+            coordinates: Default::default(),
             labels: TopologyLabelOptions { hidden: false },
             lines: TopologyLineOptions {
                 width: TopologyLength::new(8.0).unwrap(),
             },
+            scale: Default::default(),
             stations: TopologyStationOptions {
                 common: TopologyCommonStationOptions {
                     fill: TopologyCommonStationFill {
@@ -416,12 +420,12 @@ mod tests {
                 TopologyStation {
                     id: "south&west".into(),
                     names: [("en".into(), vec!["South <West>".into()])].into(),
-                    position: TopologyPosition { x: -1.0, y: 1.0 },
+                    position: TopologyPosition { x: -80.0, y: 80.0 },
                 },
                 TopologyStation {
                     id: "north".into(),
                     names: [("en".into(), vec!["North".into()])].into(),
-                    position: TopologyPosition { x: 1.0, y: 3.0 },
+                    position: TopologyPosition { x: 80.0, y: 240.0 },
                 },
             ],
             lines: vec![TopologyLine {
@@ -446,7 +450,7 @@ mod tests {
             TopologyStation {
                 id: "b".into(),
                 names: Default::default(),
-                position: TopologyPosition { x: 2.0, y: 0.0 },
+                position: TopologyPosition { x: 160.0, y: 0.0 },
             },
         ];
         let lines = (0..line_count)
@@ -472,12 +476,12 @@ mod tests {
     }
 
     #[test]
-    fn renders_paths_stations_labels_and_cartesian_y_axis() {
+    fn renders_paths_stations_labels_and_downward_cartesian_y_axis() {
         let svg = render_topology_svg(&topology()).unwrap();
 
         assert!(svg.starts_with("<svg xmlns=\"http://www.w3.org/2000/svg\""));
         assert!(svg.contains("data-line-id=\"red&quot;line\""));
-        assert!(svg.contains("d=\"M48 208 L208 48\""));
+        assert!(svg.contains("d=\"M48 48 L208 208\""));
         assert!(svg.contains("data-station-id=\"south&amp;west\""));
         assert!(svg.contains(">South &lt;West&gt;</text>"));
         assert!(svg.contains("r=\"9\" fill=\"#fedcba\""));
@@ -486,6 +490,40 @@ mod tests {
             svg.contains("<rect x=\"0\" y=\"0\" width=\"416\" height=\"256\" fill=\"#abcdef\" />")
         );
         assert!(svg.ends_with("</svg>\n"));
+    }
+
+    #[test]
+    fn explicit_right_up_axes_preserve_the_previous_orientation() {
+        let mut topology = topology();
+        topology.options.coordinates = TopologyCoordinateOptions::Cartesian {
+            axes: TopologyCartesianAxes::RightUp,
+        };
+
+        let svg = render_topology_svg(&topology).unwrap();
+
+        assert!(svg.contains("d=\"M48 208 L208 48\""));
+    }
+
+    #[test]
+    fn equivalent_geographic_axes_render_identically() {
+        let mut east_north = topology();
+        east_north.options.coordinates = TopologyCoordinateOptions::Geographic {
+            axes: TopologyGeographicAxes::EastNorth,
+        };
+        east_north.stations[0].position = TopologyPosition { x: -118.0, y: 34.0 };
+        east_north.stations[1].position = TopologyPosition { x: -117.9, y: 34.1 };
+
+        let mut north_west = east_north.clone();
+        north_west.options.coordinates = TopologyCoordinateOptions::Geographic {
+            axes: TopologyGeographicAxes::NorthWest,
+        };
+        north_west.stations[0].position = TopologyPosition { x: 34.0, y: 118.0 };
+        north_west.stations[1].position = TopologyPosition { x: 34.1, y: 117.9 };
+
+        assert_eq!(
+            render_topology_svg(&east_north).unwrap(),
+            render_topology_svg(&north_west).unwrap()
+        );
     }
 
     #[test]
@@ -506,6 +544,33 @@ mod tests {
         let svg = render_topology_svg(&topology).unwrap();
 
         assert!(svg.contains("stroke=\"#f00\" stroke-width=\"12\""));
+    }
+
+    #[test]
+    fn scales_line_and_station_lengths() {
+        let mut common = topology();
+        common.options.scale = TopologyScale::new(0.1).unwrap();
+        common.options.lines.width = TopologyLength::new(80.0).unwrap();
+        common.options.stations.common.fill.diameter = TopologyLength::new(100.0).unwrap();
+        common.options.stations.common.stroke.width = TopologyLength::new(25.0).unwrap();
+        common.options.stations.common.stroke.alignment = TopologyStrokeAlignment::Outside;
+
+        let svg = render_topology_svg(&common).unwrap();
+
+        assert!(svg.contains("stroke=\"#f00\" stroke-width=\"8\""));
+        assert!(svg.contains("r=\"5\" fill=\"#fedcba\""));
+        assert!(svg.contains("r=\"6.25\" fill=\"none\" stroke=\"#f00\" stroke-width=\"2.5\""));
+
+        let mut interchange = horizontal_shared_topology(2);
+        interchange.options.scale = TopologyScale::new(0.1).unwrap();
+        interchange.options.lines.width = TopologyLength::new(80.0).unwrap();
+        interchange.options.stations.interchange.fill.width = TopologyLength::new(125.0).unwrap();
+        interchange.options.stations.interchange.stroke.width = TopologyLength::new(25.0).unwrap();
+
+        let svg = render_topology_svg(&interchange).unwrap();
+
+        assert!(svg.contains("r=\"6.25\" fill=\"#eeeeee\""));
+        assert!(svg.contains("r=\"7.5\" fill=\"none\" stroke=\"#111111\" stroke-width=\"2.5\""));
     }
 
     #[test]

@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use clap::{ArgAction, Parser, Subcommand};
+use clap::{ArgAction, Parser, Subcommand, ValueEnum};
 use thiserror::Error;
 
 use mtrd::{
@@ -20,6 +20,13 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    /// Print an example manifest as YAML.
+    Example {
+        /// Manifest type: topology (t/topo) or schematic (s).
+        #[arg(value_name = "TYPE")]
+        kind: ExampleKind,
+    },
+
     /// Convert a metro topology between YAML and JSON.
     Convert {
         /// Source .yaml, .yml, or .json file.
@@ -89,6 +96,17 @@ enum Command {
         input: PathBuf,
     },
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum ExampleKind {
+    #[value(alias = "t", alias = "topo")]
+    Topology,
+    #[value(alias = "s")]
+    Schematic,
+}
+
+const TOPOLOGY_EXAMPLE: &str = include_str!("../examples/topology.yaml");
+const SCHEMATIC_EXAMPLE: &str = include_str!("../examples/schematic.yaml");
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Format {
@@ -193,6 +211,7 @@ fn main() -> ExitCode {
 
 fn run(cli: Cli) -> Result<String, CliError> {
     match cli.command {
+        Command::Example { kind } => Ok(example(kind).to_owned()),
         Command::Convert { input, output } => {
             convert(&input, &output)?;
             Ok(format!("{} -> {}", input.display(), output.display()))
@@ -228,6 +247,13 @@ fn run(cli: Cli) -> Result<String, CliError> {
             };
             render(&input, output.as_deref(), timestamp, kind)
         }
+    }
+}
+
+fn example(kind: ExampleKind) -> &'static str {
+    match kind {
+        ExampleKind::Topology => TOPOLOGY_EXAMPLE,
+        ExampleKind::Schematic => SCHEMATIC_EXAMPLE,
     }
 }
 
@@ -529,6 +555,34 @@ lines:
     }
 
     #[test]
+    fn accepts_every_example_type_alias() {
+        for (value, expected) in [
+            ("t", ExampleKind::Topology),
+            ("topo", ExampleKind::Topology),
+            ("topology", ExampleKind::Topology),
+            ("s", ExampleKind::Schematic),
+            ("schematic", ExampleKind::Schematic),
+        ] {
+            let cli = Cli::try_parse_from(["mtrd", "example", value]).unwrap();
+            assert!(matches!(cli.command, Command::Example { kind } if kind == expected));
+        }
+
+        assert!(Cli::try_parse_from(["mtrd", "example", "unknown"]).is_err());
+    }
+
+    #[test]
+    fn bundled_examples_are_canonical_manifests() {
+        let topology = MetroTopology::from_yaml(example(ExampleKind::Topology)).unwrap();
+        let schematic = SchematicManifest::from_yaml(example(ExampleKind::Schematic)).unwrap();
+
+        assert_eq!(topology.to_yaml().unwrap(), example(ExampleKind::Topology));
+        assert_eq!(
+            schematic.to_yaml().unwrap(),
+            example(ExampleKind::Schematic)
+        );
+    }
+
+    #[test]
     fn prints_version_with_long_and_short_flags() {
         let expected = format!("mtrd {}\n", env!("CARGO_PKG_VERSION"));
 
@@ -661,14 +715,15 @@ lines:
 
         convert(&yaml_path, &json_path).unwrap();
         let json = fs::read_to_string(&json_path).unwrap();
-        assert_eq!(
-            MetroTopology::from_json(&json).unwrap().stations[0].id,
-            "central"
-        );
+        let json_value: serde_json::Value = serde_json::from_str(&json).unwrap();
+        assert_eq!(json_value["stations"][0]["id"], "central");
+        assert_eq!(json_value["options"]["coordinates"]["type"], "cartesian");
+        assert_eq!(json_value["options"]["coordinates"]["axes"], "r-d");
 
         convert(&json_path, &round_trip_path).unwrap();
         let yaml = fs::read_to_string(&round_trip_path).unwrap();
         assert!(yaml.contains("position: [1.0, 2.0]"));
+        assert!(yaml.contains("  coordinates:\n    type: cartesian\n    axes: r-d"));
 
         fs::remove_file(yaml_path).unwrap();
         fs::remove_file(json_path).unwrap();
@@ -788,6 +843,33 @@ lines:
         assert!(svg.contains("<svg"));
         assert!(svg.contains("data-line-id=\"red\""));
         assert!(svg.contains("data-station-id=\"central\""));
+
+        fs::remove_file(input).unwrap();
+        fs::remove_file(output).unwrap();
+    }
+
+    #[test]
+    fn checks_and_renders_geographic_topologies() {
+        let input = temporary_path("yaml");
+        let output = temporary_path("svg");
+        let yaml = YAML
+            .replace(
+                "  labels:",
+                "  coordinates:\n    type: geographic\n    axes: n-w\n  labels:",
+            )
+            .replace("position: [1.0, 2.0]", "position: [34.0, 118.0]")
+            .replace("position: [3.0, 4.0]", "position: [34.1, 117.9]");
+        fs::write(&input, yaml).unwrap();
+
+        assert!(
+            check(&input, 0, ManifestKind::Topology)
+                .unwrap()
+                .ends_with(": valid")
+        );
+        render_topology(&input, Some(&output), false).unwrap();
+        let svg = fs::read_to_string(&output).unwrap();
+        assert!(svg.contains("data-line-id=\"red\""));
+        assert!(svg.contains("stroke-width=\"8\""));
 
         fs::remove_file(input).unwrap();
         fs::remove_file(output).unwrap();
