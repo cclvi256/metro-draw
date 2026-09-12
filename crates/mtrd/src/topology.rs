@@ -5,7 +5,7 @@ mod validation;
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::{LocalizedNames, manifest_format::inline_yaml_positions};
+use crate::{LocalizedNames, manifest_format::canonicalize_yaml};
 
 pub use options::{
     TopologyBackgroundOptions, TopologyCartesianAxes, TopologyCommonStationFill,
@@ -91,7 +91,7 @@ impl MetroTopology {
 
     /// Serialize a metro topology as a YAML manifest.
     pub fn to_yaml(&self) -> Result<String, serde_yaml::Error> {
-        serde_yaml::to_string(self).map(inline_yaml_positions)
+        serde_yaml::to_string(self).map(canonicalize_yaml)
     }
 
     /// Deserialize a metro topology from JSON using the same schema as YAML.
@@ -219,6 +219,9 @@ lines:
         assert!(encoded.contains("position: [10.0, 20.0]"));
         assert!(encoded.contains("position: [90.0, 20.0]"));
         assert!(!encoded.contains("position:\n"));
+        assert!(encoded.contains("en: [Futian]"));
+        assert!(encoded.contains("zh-CN: [福田]"));
+        assert!(encoded.contains("en: [Line 11, Airport Express]"));
         assert!(encoded.contains("  coordinates:\n    type: cartesian\n    axes: r-d"));
         assert!(encoded.contains("  scale: 1.0"));
     }
