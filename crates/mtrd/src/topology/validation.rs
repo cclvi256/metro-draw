@@ -125,10 +125,29 @@ pub(super) fn station_index(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{TopologyLine, TopologyPath, TopologyPosition};
+    use crate::{TopologyLine, TopologyOptions, TopologyPath, TopologyPosition};
+
+    fn options() -> TopologyOptions {
+        serde_yaml::from_str(
+            r##"
+background: { transparent: true }
+labels: { hidden: false }
+lines: { width: 8.0 }
+stations:
+  common:
+    fill: { diameter: 18.0, color: { type: unified, value: "#ffffff" } }
+    stroke: { width: 2.0, alignment: center, color: { type: follow-line } }
+  interchange:
+    fill: { width: 18.0, color: "#ffffff" }
+    stroke: { width: 2.0, alignment: outside, color: "#000000" }
+"##,
+        )
+        .unwrap()
+    }
 
     fn topology() -> MetroTopology {
         MetroTopology {
+            options: options(),
             stations: vec![
                 TopologyStation {
                     id: "south&west".into(),

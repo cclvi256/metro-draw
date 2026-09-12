@@ -23,8 +23,13 @@ pub use schematic::{
     render_schematic_svg, validate_schematic,
 };
 pub use topology::{
-    MetroTopology, TopologyLine, TopologyPath, TopologyPosition, TopologyRenderError,
-    TopologyStation, render_topology_svg, validate_topology,
+    MetroTopology, TopologyBackgroundOptions, TopologyCommonStationFill,
+    TopologyCommonStationOptions, TopologyCommonStationStroke, TopologyInterchangeStationFill,
+    TopologyInterchangeStationOptions, TopologyInterchangeStationStroke, TopologyLabelOptions,
+    TopologyLength, TopologyLine, TopologyLineOptions, TopologyOptions, TopologyPath,
+    TopologyPosition, TopologyRenderError, TopologyStation, TopologyStationColor,
+    TopologyStationOptions, TopologyStrokeAlignment, TopologyValueError, render_topology_svg,
+    validate_topology,
 };
 
 /// Names indexed by a locale such as `en` or `zh-CN`.

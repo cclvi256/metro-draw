@@ -1,4 +1,5 @@
 mod layout;
+mod options;
 mod render;
 mod validation;
 
@@ -6,6 +7,13 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{LocalizedNames, manifest_format::inline_yaml_positions};
 
+pub use options::{
+    TopologyBackgroundOptions, TopologyCommonStationFill, TopologyCommonStationOptions,
+    TopologyCommonStationStroke, TopologyInterchangeStationFill, TopologyInterchangeStationOptions,
+    TopologyInterchangeStationStroke, TopologyLabelOptions, TopologyLength, TopologyLineOptions,
+    TopologyOptions, TopologyStationColor, TopologyStationOptions, TopologyStrokeAlignment,
+    TopologyValueError,
+};
 pub use render::render_topology_svg;
 pub use validation::{TopologyRenderError, validate_topology};
 
@@ -13,6 +21,7 @@ pub use validation::{TopologyRenderError, validate_topology};
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MetroTopology {
+    pub options: TopologyOptions,
     pub stations: Vec<TopologyStation>,
     pub lines: Vec<TopologyLine>,
 }
@@ -100,6 +109,33 @@ mod tests {
     use super::*;
 
     const TOPOLOGY_YAML: &str = r#"
+options:
+  background:
+    color: '#ffffff'
+  labels:
+    hidden: false
+  lines:
+    width: 8.0
+  stations:
+    common:
+      fill:
+        diameter: 18.0
+        color:
+          type: unified
+          value: '#ffffff'
+      stroke:
+        width: 2.0
+        alignment: center
+        color:
+          type: follow-line
+    interchange:
+      fill:
+        width: 18.0
+        color: '#ffffff'
+      stroke:
+        width: 2.0
+        alignment: outside
+        color: '#000000'
 stations:
   - id: futian
     names:
@@ -150,6 +186,18 @@ lines:
         assert_eq!(topology.lines[0].names["en"][0], "Line 11");
         assert_eq!(topology.lines[0].names["en"][1], "Airport Express");
         assert_eq!(topology.lines[0].color, "#672146");
+        assert_eq!(
+            topology.options.background,
+            TopologyBackgroundOptions::Color {
+                color: "#ffffff".into()
+            }
+        );
+        assert_eq!(topology.options.lines.width.get(), 8.0);
+        assert!(!topology.options.labels.hidden);
+        assert_eq!(
+            topology.options.stations.common.stroke.alignment,
+            TopologyStrokeAlignment::Center
+        );
         assert!(!topology.lines[0].paths[0].closed);
     }
 
@@ -195,7 +243,9 @@ lines:
 
     #[test]
     fn accepts_british_colour_and_serializes_canonically() {
-        let british_yaml = TOPOLOGY_YAML.replace("    color:", "    colour:");
+        let british_yaml = TOPOLOGY_YAML
+            .replace("color:", "colour:")
+            .replace("alignment: center", "alignment: centre");
         let topology = MetroTopology::from_yaml(&british_yaml).unwrap();
         let canonical_yaml = topology.to_yaml().unwrap();
         let british_json = topology
@@ -206,12 +256,68 @@ lines:
         assert_eq!(MetroTopology::from_json(&british_json).unwrap(), topology);
         assert!(canonical_yaml.contains("  color:"));
         assert!(!canonical_yaml.contains("colour:"));
+        assert!(canonical_yaml.contains("alignment: center"));
+        assert!(!canonical_yaml.contains("alignment: centre"));
         assert!(
             topology
                 .to_json()
                 .unwrap()
                 .contains("\"color\":\"#672146\"")
         );
+    }
+
+    #[test]
+    fn enforces_exclusive_background_variants() {
+        let color_background = "  background:\n    color: '#ffffff'";
+        let transparent_yaml =
+            TOPOLOGY_YAML.replace(color_background, "  background:\n    transparent: true");
+        let transparent = MetroTopology::from_yaml(&transparent_yaml).unwrap();
+        let canonical: serde_yaml::Value =
+            serde_yaml::from_str(&transparent.to_yaml().unwrap()).unwrap();
+
+        assert_eq!(
+            transparent.options.background,
+            TopologyBackgroundOptions::Transparent
+        );
+        assert_eq!(canonical["options"]["background"]["transparent"], true);
+        assert!(canonical["options"]["background"]["color"].is_null());
+
+        for spelling in ["color", "colour"] {
+            let compatible_yaml = TOPOLOGY_YAML.replace(
+                color_background,
+                &format!("  background:\n    {spelling}: '#ffffff'\n    transparent: false"),
+            );
+            let compatible = MetroTopology::from_yaml(&compatible_yaml).unwrap();
+            let canonical: serde_yaml::Value =
+                serde_yaml::from_str(&compatible.to_yaml().unwrap()).unwrap();
+
+            assert_eq!(
+                compatible.options.background,
+                TopologyBackgroundOptions::Color {
+                    color: "#ffffff".into()
+                }
+            );
+            assert_eq!(canonical["options"]["background"]["color"], "#ffffff");
+            assert!(canonical["options"]["background"]["transparent"].is_null());
+            assert!(canonical["options"]["background"]["colour"].is_null());
+        }
+
+        for invalid_background in [
+            "  background:\n    color: '#ffffff'\n    transparent: true",
+            "  background:\n    transparent: false",
+            "  background: {}",
+            "  background:\n    color: '#ffffff'\n    unexpected: true",
+        ] {
+            assert!(
+                MetroTopology::from_yaml(
+                    &TOPOLOGY_YAML.replace(color_background, invalid_background)
+                )
+                .is_err()
+            );
+        }
+
+        let (_, manifest_body) = TOPOLOGY_YAML.split_once("stations:\n").unwrap();
+        assert!(MetroTopology::from_yaml(&format!("stations:\n{manifest_body}")).is_err());
     }
 
     #[test]
@@ -229,5 +335,23 @@ lines:
         let yaml = TOPOLOGY_YAML.replace("position: [90.0, 20.0]", "position: [90.0]");
 
         assert!(MetroTopology::from_yaml(&yaml).is_err());
+    }
+
+    #[test]
+    fn rejects_invalid_rendering_lengths() {
+        for invalid in ["0.0", "-1.0", ".inf", ".nan"] {
+            let yaml = TOPOLOGY_YAML.replace("    width: 8.0", &format!("    width: {invalid}"));
+
+            assert!(MetroTopology::from_yaml(&yaml).is_err());
+        }
+    }
+
+    #[test]
+    fn rejects_unknown_or_non_boolean_label_options() {
+        for invalid in ["    visible: false", "    hidden: 'false'"] {
+            let yaml = TOPOLOGY_YAML.replace("    hidden: false", invalid);
+
+            assert!(MetroTopology::from_yaml(&yaml).is_err());
+        }
     }
 }
