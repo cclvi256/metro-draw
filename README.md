@@ -82,6 +82,10 @@ alignment is `inside`, `center`, or `outside`, with `centre` accepted on input.
 Station-name labels are displayed when `options.labels.hidden` is `false` and
 omitted when it is `true`.
 
+Configuration keys and enum values use kebab-case in canonical YAML and JSON.
+For example, schematic routes use `station-id` and `single-line`, while Rust
+fields and variants retain their conventional `snake_case` and `PascalCase`.
+
 ## Schematic manifest library API
 
 The library also defines the semantic schematic-map schema documented in

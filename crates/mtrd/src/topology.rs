@@ -19,7 +19,7 @@ pub use validation::{TopologyRenderError, validate_topology};
 
 /// An entire metro topology manifest.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct MetroTopology {
     pub options: TopologyOptions,
     pub stations: Vec<TopologyStation>,
@@ -28,7 +28,7 @@ pub struct MetroTopology {
 
 /// A station and its position in the topology graph.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct TopologyStation {
     pub id: String,
     pub names: LocalizedNames,
@@ -65,7 +65,7 @@ impl<'de> Deserialize<'de> for TopologyPosition {
 
 /// A topological metro line composed of one or more paths.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct TopologyLine {
     pub id: String,
     pub names: LocalizedNames,
@@ -76,7 +76,7 @@ pub struct TopologyLine {
 
 /// An ordered topological traversal of stations belonging to a line.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct TopologyPath {
     pub stations: Vec<String>,
     pub closed: bool,

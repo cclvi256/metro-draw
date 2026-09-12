@@ -6,7 +6,7 @@ use super::{SchematicLength, SchematicPoint, SchematicStationPort};
 
 /// A layout corner shared by its semantic reference and geometric result.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct SchematicCorner {
     pub id: String,
     pub position: SchematicPoint,
@@ -15,7 +15,7 @@ pub struct SchematicCorner {
 
 /// A semantic metro line and its schematic paths.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct SchematicLine {
     pub id: String,
     pub names: LocalizedNames,
@@ -26,7 +26,7 @@ pub struct SchematicLine {
 
 /// An ordered semantic traversal of stations and layout corners.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct SchematicPath {
     pub visits: Vec<SchematicRouteVisit>,
     pub closed: bool,
@@ -34,7 +34,12 @@ pub struct SchematicPath {
 
 /// A station or corner visited by a semantic schematic path.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
+#[serde(
+    tag = "type",
+    rename_all = "kebab-case",
+    rename_all_fields = "kebab-case",
+    deny_unknown_fields
+)]
 pub enum SchematicRouteVisit {
     Station {
         station_id: String,

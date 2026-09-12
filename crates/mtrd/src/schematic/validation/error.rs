@@ -52,18 +52,18 @@ pub enum SchematicRenderError {
     #[error("station '{station}' uses a port incompatible with its symbol")]
     IncompatiblePort { station: String },
     #[error(
-        "station '{station}' uses a perpendicular port incompatible with anchor_count {anchor_count}"
+        "station '{station}' uses a perpendicular port incompatible with anchor-count {anchor_count}"
     )]
     IncompatiblePerpendicularPort { station: String, anchor_count: u8 },
     #[error(
-        "station '{station}' uses perpendicular anchor {index}, outside anchor_count {anchor_count}"
+        "station '{station}' uses perpendicular anchor {index}, outside anchor-count {anchor_count}"
     )]
     PerpendicularAnchorOutOfRange {
         station: String,
         index: u8,
         anchor_count: u8,
     },
-    #[error("station '{station}' cannot use an oblique port with anchor_count {anchor_count}")]
+    #[error("station '{station}' cannot use an oblique port with anchor-count {anchor_count}")]
     ObliquePortWithMultipleAnchors { station: String, anchor_count: u8 },
     #[error("station port '{port}' is referenced by lines '{first_line}' and '{second_line}'")]
     PortSharedByLines {
@@ -81,7 +81,7 @@ pub enum SchematicRenderError {
         "station '{station}' must reference each of its {anchor_count} perpendicular anchors exactly once"
     )]
     IncompletePerpendicularPorts { station: String, anchor_count: u8 },
-    #[error("station '{station}' anchor_interval must be at least the line width")]
+    #[error("station '{station}' anchor-interval must be at least the line width")]
     AnchorIntervalTooSmall { station: String },
     #[error("path {path} of line '{line}' has coincident consecutive points")]
     CoincidentPoints { line: String, path: usize },
