@@ -2,12 +2,11 @@ use std::collections::HashMap;
 use std::fmt::Write;
 
 use super::{
-    MetroTopology, TopologyPath, TopologyStation,
+    MetroTopology, TopologyPath, TopologyStation, TopologyStationColor, TopologyStrokeAlignment,
     layout::Bounds,
     validation::{TopologyRenderError, station_index, validate_topology},
 };
 
-const LINE_WIDTH: f64 = 8.0;
 const LANE_GAP: f64 = 3.0;
 const TAPER_LENGTH: f64 = 24.0;
 
@@ -19,7 +18,13 @@ const TAPER_LENGTH: f64 = 24.0;
 pub fn render_topology_svg(topology: &MetroTopology) -> Result<String, TopologyRenderError> {
     validate_topology(topology)?;
     let stations = station_index(topology)?;
+    let station_lines = station_lines(topology);
     let segment_lanes = segment_lanes(topology);
+    let line_width = topology.options.lines.width.get();
+    let lane_spacing = lane_spacing(line_width);
+    if !lane_spacing.is_finite() {
+        return Err(TopologyRenderError::CoordinateRange);
+    }
     let bounds = Bounds::from_topology(topology);
     let (width, height) = bounds
         .viewport()
@@ -36,6 +41,16 @@ pub fn render_topology_svg(topology: &MetroTopology) -> Result<String, TopologyR
     )
     .unwrap();
     writeln!(svg, "  <title>Metro topology map</title>").unwrap();
+    if let crate::TopologyBackgroundOptions::Color { color } = &topology.options.background {
+        writeln!(
+            svg,
+            "  <rect x=\"0\" y=\"0\" width=\"{}\" height=\"{}\" fill=\"{}\" />",
+            number(width),
+            number(height),
+            xml_escape(color),
+        )
+        .unwrap();
+    }
     writeln!(
         svg,
         "  <g fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\">"
@@ -59,7 +74,7 @@ pub fn render_topology_svg(topology: &MetroTopology) -> Result<String, TopologyR
                     number(x),
                     number(y),
                     xml_escape(&line.color),
-                    number(LINE_WIDTH),
+                    number(line_width),
                 )
                 .unwrap();
                 continue;
@@ -86,8 +101,7 @@ pub fn render_topology_svg(topology: &MetroTopology) -> Result<String, TopologyR
                     .iter()
                     .position(|candidate| *candidate == line_index)
                     .expect("every rendered segment was indexed");
-                let offset =
-                    (lane_index as f64 - (lanes.len() as f64 - 1.0) / 2.0) * lane_spacing();
+                let offset = (lane_index as f64 - (lanes.len() as f64 - 1.0) / 2.0) * lane_spacing;
                 let data = segment_path(bounds, start, end, key.is_forward(start_id), offset)?;
 
                 writeln!(
@@ -96,7 +110,7 @@ pub fn render_topology_svg(topology: &MetroTopology) -> Result<String, TopologyR
                     xml_escape(&line.id),
                     data,
                     xml_escape(&line.color),
-                    number(LINE_WIDTH),
+                    number(line_width),
                 )
                 .unwrap();
             }
@@ -107,18 +121,63 @@ pub fn render_topology_svg(topology: &MetroTopology) -> Result<String, TopologyR
 
     for station in &topology.stations {
         let (x, y) = project(bounds, station)?;
-        let label = station_label(station);
+        let line_indexes = station_lines
+            .get(station.id.as_str())
+            .map(Vec::as_slice)
+            .unwrap_or_default();
+        let (diameter, fill, stroke, stroke_width, stroke_alignment) = if line_indexes.len() > 1 {
+            let options = &topology.options.stations.interchange;
+            (
+                options.fill.width.get().max(line_width),
+                options.fill.color.as_str(),
+                options.stroke.color.as_str(),
+                options.stroke.width.get(),
+                options.stroke.alignment,
+            )
+        } else {
+            let options = &topology.options.stations.common;
+            (
+                options.fill.diameter.get().max(line_width),
+                station_color(topology, line_indexes, &options.fill.color),
+                station_color(topology, line_indexes, &options.stroke.color),
+                options.stroke.width.get(),
+                options.stroke.alignment,
+            )
+        };
+        let outline_diameter = aligned_size(diameter, stroke_width, stroke_alignment);
+        if !outline_diameter.is_finite() {
+            return Err(TopologyRenderError::CoordinateRange);
+        }
         writeln!(
             svg,
-            "    <g data-station-id=\"{}\"><circle cx=\"{}\" cy=\"{}\" r=\"7\" fill=\"white\" stroke=\"#222\" stroke-width=\"3\" /><text x=\"{}\" y=\"{}\" dominant-baseline=\"middle\">{}</text></g>",
+            "    <g data-station-id=\"{}\"><circle cx=\"{}\" cy=\"{}\" r=\"{}\" fill=\"{}\" /><circle cx=\"{}\" cy=\"{}\" r=\"{}\" fill=\"none\" stroke=\"{}\" stroke-width=\"{}\" />",
             xml_escape(&station.id),
             number(x),
             number(y),
-            number(x + 13.0),
+            number(diameter / 2.0),
+            xml_escape(fill),
+            number(x),
             number(y),
-            xml_escape(label),
+            number(outline_diameter / 2.0),
+            xml_escape(stroke),
+            number(stroke_width),
         )
         .unwrap();
+        if !topology.options.labels.hidden {
+            let label_x = x + diameter.max(outline_diameter) / 2.0 + 6.0;
+            if !label_x.is_finite() {
+                return Err(TopologyRenderError::CoordinateRange);
+            }
+            write!(
+                svg,
+                "<text x=\"{}\" y=\"{}\" dominant-baseline=\"middle\">{}</text>",
+                number(label_x),
+                number(y),
+                xml_escape(station_label(station)),
+            )
+            .unwrap();
+        }
+        writeln!(svg, "</g>").unwrap();
     }
 
     writeln!(svg, "  </g>").unwrap();
@@ -164,6 +223,21 @@ fn segment_lanes(topology: &MetroTopology) -> HashMap<SegmentKey<'_>, Vec<usize>
     segments
 }
 
+fn station_lines(topology: &MetroTopology) -> HashMap<&str, Vec<usize>> {
+    let mut stations = HashMap::<_, Vec<_>>::new();
+    for (line_index, line) in topology.lines.iter().enumerate() {
+        for path in &line.paths {
+            for station in &path.stations {
+                let lines = stations.entry(station.as_str()).or_default();
+                if !lines.contains(&line_index) {
+                    lines.push(line_index);
+                }
+            }
+        }
+    }
+    stations
+}
+
 fn path_segments(path: &TopologyPath) -> impl Iterator<Item = (&str, &str)> {
     let adjacent = path
         .stations
@@ -178,8 +252,31 @@ fn path_segments(path: &TopologyPath) -> impl Iterator<Item = (&str, &str)> {
     adjacent.chain(closing)
 }
 
-fn lane_spacing() -> f64 {
-    LINE_WIDTH + LANE_GAP
+fn lane_spacing(line_width: f64) -> f64 {
+    line_width + LANE_GAP
+}
+
+fn station_color<'a>(
+    topology: &'a MetroTopology,
+    line_indexes: &[usize],
+    color: &'a TopologyStationColor,
+) -> &'a str {
+    match color {
+        TopologyStationColor::Unified { value } => value,
+        TopologyStationColor::FollowLine {} => {
+            line_indexes.first().map_or("currentColor", |index| {
+                topology.lines[*index].color.as_str()
+            })
+        }
+    }
+}
+
+fn aligned_size(size: f64, stroke_width: f64, alignment: TopologyStrokeAlignment) -> f64 {
+    match alignment {
+        TopologyStrokeAlignment::Inside => (size - stroke_width).max(0.0),
+        TopologyStrokeAlignment::Center => size,
+        TopologyStrokeAlignment::Outside => size + stroke_width,
+    }
 }
 
 fn segment_path(
@@ -266,10 +363,55 @@ fn xml_escape(value: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{TopologyLine, TopologyPath, TopologyPosition};
+    use crate::{
+        TopologyBackgroundOptions, TopologyCommonStationFill, TopologyCommonStationOptions,
+        TopologyCommonStationStroke, TopologyInterchangeStationFill,
+        TopologyInterchangeStationOptions, TopologyInterchangeStationStroke, TopologyLabelOptions,
+        TopologyLength, TopologyLine, TopologyLineOptions, TopologyOptions, TopologyPath,
+        TopologyPosition, TopologyStationOptions,
+    };
+
+    fn options() -> TopologyOptions {
+        TopologyOptions {
+            background: TopologyBackgroundOptions::Color {
+                color: "#abcdef".into(),
+            },
+            labels: TopologyLabelOptions { hidden: false },
+            lines: TopologyLineOptions {
+                width: TopologyLength::new(8.0).unwrap(),
+            },
+            stations: TopologyStationOptions {
+                common: TopologyCommonStationOptions {
+                    fill: TopologyCommonStationFill {
+                        diameter: TopologyLength::new(18.0).unwrap(),
+                        color: TopologyStationColor::Unified {
+                            value: "#fedcba".into(),
+                        },
+                    },
+                    stroke: TopologyCommonStationStroke {
+                        width: TopologyLength::new(2.0).unwrap(),
+                        alignment: TopologyStrokeAlignment::Center,
+                        color: TopologyStationColor::FollowLine {},
+                    },
+                },
+                interchange: TopologyInterchangeStationOptions {
+                    fill: TopologyInterchangeStationFill {
+                        width: TopologyLength::new(20.0).unwrap(),
+                        color: "#eeeeee".into(),
+                    },
+                    stroke: TopologyInterchangeStationStroke {
+                        width: TopologyLength::new(4.0).unwrap(),
+                        alignment: TopologyStrokeAlignment::Outside,
+                        color: "#111111".into(),
+                    },
+                },
+            },
+        }
+    }
 
     fn topology() -> MetroTopology {
         MetroTopology {
+            options: options(),
             stations: vec![
                 TopologyStation {
                     id: "south&west".into(),
@@ -322,7 +464,11 @@ mod tests {
                 }],
             })
             .collect();
-        MetroTopology { stations, lines }
+        MetroTopology {
+            options: options(),
+            stations,
+            lines,
+        }
     }
 
     #[test]
@@ -334,7 +480,44 @@ mod tests {
         assert!(svg.contains("d=\"M48 208 L208 48\""));
         assert!(svg.contains("data-station-id=\"south&amp;west\""));
         assert!(svg.contains(">South &lt;West&gt;</text>"));
+        assert!(svg.contains("r=\"9\" fill=\"#fedcba\""));
+        assert!(svg.contains("r=\"9\" fill=\"none\" stroke=\"#f00\" stroke-width=\"2\""));
+        assert!(
+            svg.contains("<rect x=\"0\" y=\"0\" width=\"416\" height=\"256\" fill=\"#abcdef\" />")
+        );
         assert!(svg.ends_with("</svg>\n"));
+    }
+
+    #[test]
+    fn omits_the_background_rectangle_when_transparent() {
+        let mut topology = topology();
+        topology.options.background = TopologyBackgroundOptions::Transparent;
+
+        let svg = render_topology_svg(&topology).unwrap();
+
+        assert!(!svg.contains("<rect"));
+    }
+
+    #[test]
+    fn renders_the_configured_line_width() {
+        let mut topology = topology();
+        topology.options.lines.width = TopologyLength::new(12.0).unwrap();
+
+        let svg = render_topology_svg(&topology).unwrap();
+
+        assert!(svg.contains("stroke=\"#f00\" stroke-width=\"12\""));
+    }
+
+    #[test]
+    fn omits_station_name_labels_when_hidden() {
+        let mut topology = topology();
+        topology.options.labels.hidden = true;
+
+        let svg = render_topology_svg(&topology).unwrap();
+
+        assert!(!svg.contains("<text"));
+        assert!(!svg.contains("South &lt;West&gt;"));
+        assert!(svg.contains("data-station-id=\"south&amp;west\""));
     }
 
     #[test]
@@ -343,6 +526,8 @@ mod tests {
 
         assert!(svg.contains("data-line-id=\"line-0\" d=\"M48 48 L72 42.5 L184 42.5 L208 48\""));
         assert!(svg.contains("data-line-id=\"line-1\" d=\"M208 48 L184 53.5 L72 53.5 L48 48\""));
+        assert!(svg.contains("r=\"10\" fill=\"#eeeeee\""));
+        assert!(svg.contains("r=\"12\" fill=\"none\" stroke=\"#111111\" stroke-width=\"4\""));
     }
 
     #[test]
@@ -395,6 +580,7 @@ mod tests {
     #[test]
     fn renders_an_empty_topology() {
         let svg = render_topology_svg(&MetroTopology {
+            options: options(),
             stations: vec![],
             lines: vec![],
         })

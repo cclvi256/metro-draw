@@ -65,6 +65,23 @@ finite positions, finite positive lengths, and rejection of unknown fields.
 With `check -v`, `mtrd` prints the parsed map as canonical YAML after it passes
 validation. With `check -vv`, it prints the detailed Rust debug representation.
 
+## Topology manifest library API
+
+`MetroTopology` supports strict YAML and equivalent JSON serialisation through
+`from_yaml`, `to_yaml`, `from_json`, and `to_json`. Its global `options` set
+either an opaque background `color` or `transparent: true`, the width of line
+strokes, and the fill and stroke styling of common and interchange stations.
+An explicit `transparent: false` may accompany a background colour and
+`colour` is accepted on input; canonical output uses `color` and omits the
+redundant transparency field. A coloured background is rendered across the
+entire SVG viewport, while a transparent background emits no background
+rectangle. Stations used by more than one distinct line receive interchange
+styling; other stations receive common styling. Common-station fill and stroke
+colours support the `unified` and `follow-line` policies. Station stroke
+alignment is `inside`, `center`, or `outside`, with `centre` accepted on input.
+Station-name labels are displayed when `options.labels.hidden` is `false` and
+omitted when it is `true`.
+
 ## Schematic manifest library API
 
 The library also defines the semantic schematic-map schema documented in

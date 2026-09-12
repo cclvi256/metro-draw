@@ -409,6 +409,25 @@ mod tests {
     use super::*;
 
     const YAML: &str = r#"
+options:
+  background:
+    color: '#ffffff'
+  labels:
+    hidden: false
+  lines:
+    width: 8.0
+  stations:
+    common:
+      fill:
+        diameter: 18.0
+        color: { type: unified, value: '#ffffff' }
+      stroke:
+        width: 2.0
+        alignment: center
+        color: { type: follow-line }
+    interchange:
+      fill: { width: 18.0, color: '#ffffff' }
+      stroke: { width: 2.0, alignment: outside, color: '#000000' }
 stations:
   - id: central
     names:
@@ -669,7 +688,7 @@ lines:
         assert!(
             check(&path, 1, ManifestKind::Topology)
                 .unwrap()
-                .starts_with("stations:")
+                .starts_with("options:")
         );
         assert!(
             check(&path, 2, ManifestKind::Topology)
