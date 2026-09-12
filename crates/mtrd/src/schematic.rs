@@ -7,7 +7,7 @@ mod validation;
 
 use serde::{Deserialize, Serialize};
 
-use crate::manifest_format::inline_yaml_positions;
+use crate::manifest_format::canonicalize_yaml;
 
 pub use geometry::{SchematicLength, SchematicPoint, SchematicValueError};
 pub use options::{
@@ -41,7 +41,7 @@ impl SchematicManifest {
 
     /// Serialize a semantic schematic manifest to YAML.
     pub fn to_yaml(&self) -> Result<String, serde_yaml::Error> {
-        serde_yaml::to_string(self).map(inline_yaml_positions)
+        serde_yaml::to_string(self).map(canonicalize_yaml)
     }
 
     /// Deserialize a semantic schematic manifest from equivalent JSON.
@@ -171,6 +171,8 @@ lines:
 
         assert_eq!(decoded, schematic);
         assert!(encoded.contains("position: [0.0, 40.0]"));
+        assert!(encoded.contains("en: [West]"));
+        assert!(encoded.contains("en: [Line A]"));
         assert!(encoded.contains("alignment: center"));
         assert!(!encoded.contains("alignment: centre"));
         assert_eq!(value["options"]["background"]["color"], "#ffffff");

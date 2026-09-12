@@ -163,6 +163,16 @@ omitted when it is `true`.
 Configuration keys and enum values use kebab-case in canonical YAML and JSON.
 For example, schematic routes use `station-id` and `single-line`, while Rust
 fields and variants retain their conventional `snake_case` and `PascalCase`.
+Canonical YAML keeps positions and each locale's names in compact flow style:
+
+```yaml
+position: [754.0, 323.0]
+names:
+  en: [Munich]
+  de: [München]
+  zh-TW: [慕尼黑]
+  fr: [Munich]
+```
 
 ## Schematic manifest library API
 

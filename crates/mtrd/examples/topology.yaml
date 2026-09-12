@@ -32,79 +32,64 @@ options:
 stations:
 - id: north
   names:
-    en:
-    - North
+    en: [North]
   position: [304.0, 0.0]
 - id: upper-west
   names:
-    en:
-    - Upper West
+    en: [Upper West]
   position: [279.0, 150.0]
 - id: upper-east
   names:
-    en:
-    - Upper East
+    en: [Upper East]
   position: [483.0, 150.0]
 - id: far-west
   names:
-    en:
-    - Far West
+    en: [Far West]
   position: [0.0, 307.0]
 - id: west
   names:
-    en:
-    - West
+    en: [West]
   position: [131.0, 308.0]
 - id: centre-west
   names:
-    en:
-    - Centre West
+    en: [Centre West]
   position: [280.0, 304.0]
 - id: centre
   names:
-    en:
-    - Centre
+    en: [Centre]
   position: [428.0, 317.0]
 - id: centre-east
   names:
-    en:
-    - Centre East
+    en: [Centre East]
   position: [584.0, 315.0]
 - id: far-east
   names:
-    en:
-    - Far East
+    en: [Far East]
   position: [754.0, 323.0]
 - id: lower-centre
   names:
-    en:
-    - Lower Centre
+    en: [Lower Centre]
   position: [341.0, 402.0]
 - id: lower-west
   names:
-    en:
-    - Lower West
+    en: [Lower West]
   position: [286.0, 480.0]
 - id: lower-east
   names:
-    en:
-    - Lower East
+    en: [Lower East]
   position: [484.0, 464.0]
 - id: south-west
   names:
-    en:
-    - South West
+    en: [South West]
   position: [228.0, 557.0]
 - id: south-east
   names:
-    en:
-    - South East
+    en: [South East]
   position: [649.0, 533.0]
 lines:
 - id: green
   names:
-    en:
-    - Green Line
+    en: [Green Line]
   color: '#15C76F'
   paths:
   - stations:
@@ -117,8 +102,7 @@ lines:
     closed: false
 - id: orange
   names:
-    en:
-    - Orange Line
+    en: [Orange Line]
   color: '#FFAE00'
   paths:
   - stations:
@@ -137,8 +121,7 @@ lines:
     closed: false
 - id: blue-loop
   names:
-    en:
-    - Blue Loop
+    en: [Blue Loop]
   color: '#0795ED'
   paths:
   - stations:
