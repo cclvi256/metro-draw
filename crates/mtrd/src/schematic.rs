@@ -26,7 +26,7 @@ pub use validation::{SchematicRenderError, validate_schematic};
 
 /// A complete, human-editable schematic-map manifest.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct SchematicManifest {
     pub options: SchematicOptions,
     pub stations: Vec<SchematicStation>,
@@ -102,9 +102,9 @@ stations:
         - Central
     symbol:
       type: capsule
-      axis: rising_diagonal
-      anchor_count: 1
-      anchor_interval: 24.0
+      axis: rising-diagonal
+      anchor-count: 1
+      anchor-interval: 24.0
 
 corners:
   - id: west-corner
@@ -120,17 +120,17 @@ lines:
     paths:
       - visits:
           - type: station
-            station_id: west
+            station-id: west
             port:
-              type: single_line
+              type: single-line
           - type: corner
-            corner_id: west-corner
+            corner-id: west-corner
           - type: station
-            station_id: central
+            station-id: central
             port:
               type: interchange
               interchange:
-                type: single_perpendicular
+                type: single-perpendicular
         closed: false
 "##;
 
@@ -176,11 +176,28 @@ lines:
         assert_eq!(value["options"]["background"]["color"], "#ffffff");
         assert!(value["options"]["background"]["colour"].is_null());
         assert!(value["options"]["background"]["transparent"].is_null());
+        assert_eq!(value["stations"][1]["symbol"]["axis"], "rising-diagonal");
+        assert_eq!(value["stations"][1]["symbol"]["anchor-count"], 1);
+        assert!(value["stations"][1]["symbol"]["anchor_count"].is_null());
+        assert_eq!(
+            value["lines"][0]["paths"][0]["visits"][2]["station-id"],
+            "central"
+        );
+        assert!(value["lines"][0]["paths"][0]["visits"][2]["station_id"].is_null());
         assert_eq!(
             value["lines"][0]["paths"][0]["visits"][2]["port"]["interchange"]["type"],
-            "single_perpendicular"
+            "single-perpendicular"
         );
         assert!(value["lines"][0]["paths"][0]["visits"][2]["port"]["port"].is_null());
+    }
+
+    #[test]
+    fn rejects_snake_case_configuration_tokens() {
+        let snake_case_key = SCHEMATIC_YAML.replace("anchor-count: 1", "anchor_count: 1");
+        let snake_case_value = SCHEMATIC_YAML.replace("type: single-line", "type: single_line");
+
+        assert!(SchematicManifest::from_yaml(&snake_case_key).is_err());
+        assert!(SchematicManifest::from_yaml(&snake_case_value).is_err());
     }
 
     #[test]
@@ -193,7 +210,7 @@ lines:
         assert_eq!(
             serde_json::from_str::<serde_json::Value>(&encoded).unwrap()["lines"][0]["paths"][0]["visits"]
                 [2]["port"]["interchange"]["type"],
-            "single_perpendicular"
+            "single-perpendicular"
         );
     }
 
@@ -228,8 +245,8 @@ lines:
     #[test]
     fn rejects_repeated_port_key_for_interchange_payload() {
         let yaml = SCHEMATIC_YAML.replace(
-            "              interchange:\n                type: single_perpendicular",
-            "              port:\n                type: single_perpendicular",
+            "              interchange:\n                type: single-perpendicular",
+            "              port:\n                type: single-perpendicular",
         );
 
         assert!(SchematicManifest::from_yaml(&yaml).is_err());
@@ -307,16 +324,16 @@ lines:
     #[test]
     fn rejects_unknown_schematic_fields() {
         let invalid_port = SCHEMATIC_YAML.replace(
-            "                type: single_perpendicular",
-            "                type: single_perpendicular\n                index: 0",
+            "                type: single-perpendicular",
+            "                type: single-perpendicular\n                index: 0",
         );
         let invalid_circle = SCHEMATIC_YAML.replace(
             "    symbol:\n      type: circle",
             "    symbol:\n      type: circle\n      diameter: 18.0",
         );
         let invalid_single_line = SCHEMATIC_YAML.replace(
-            "              type: single_line",
-            "              type: single_line\n              index: 0",
+            "              type: single-line",
+            "              type: single-line\n              index: 0",
         );
         let invalid_color = SCHEMATIC_YAML.replace(
             "          type: follow-line",
@@ -324,7 +341,7 @@ lines:
         );
         let obsolete_flat_option = SCHEMATIC_YAML.replace(
             "  lines:\n    width: 8.0",
-            "  line_width: 8.0\n  lines:\n    width: 8.0",
+            "  line-width: 8.0\n  lines:\n    width: 8.0",
         );
 
         assert!(SchematicManifest::from_yaml(&invalid_port).is_err());

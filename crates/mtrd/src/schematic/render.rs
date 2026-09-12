@@ -332,7 +332,7 @@ stations:
   - id: central
     position: [80.0, 80.0]
     names: { en: [Central] }
-    symbol: { type: capsule, axis: rising_diagonal, anchor_count: 1, anchor_interval: 24.0 }
+    symbol: { type: capsule, axis: rising-diagonal, anchor-count: 1, anchor-interval: 24.0 }
 corners:
   - { id: bend, position: [40.0, 40.0], radius: 8.0 }
 lines:
@@ -342,9 +342,9 @@ lines:
     paths:
       - closed: false
         visits:
-          - { type: station, station_id: west, port: { type: single_line } }
-          - { type: corner, corner_id: bend }
-          - { type: station, station_id: central, port: { type: interchange, interchange: { type: single_perpendicular } } }
+          - { type: station, station-id: west, port: { type: single-line } }
+          - { type: corner, corner-id: bend }
+          - { type: station, station-id: central, port: { type: interchange, interchange: { type: single-perpendicular } } }
 "##;
 
     #[test]

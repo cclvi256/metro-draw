@@ -6,7 +6,7 @@ use super::{SchematicLength, SchematicPoint};
 
 /// A station and its requested schematic symbol.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct SchematicStation {
     pub id: String,
     pub position: SchematicPoint,
@@ -16,7 +16,12 @@ pub struct SchematicStation {
 
 /// The station symbol requested by the semantic schematic manifest.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
+#[serde(
+    tag = "type",
+    rename_all = "kebab-case",
+    rename_all_fields = "kebab-case",
+    deny_unknown_fields
+)]
 pub enum SchematicStationSymbol {
     // Empty struct variants make `deny_unknown_fields` apply to fieldless cases.
     Circle {},
@@ -31,7 +36,8 @@ pub enum SchematicStationSymbol {
 #[serde(
     tag = "type",
     content = "interchange",
-    rename_all = "snake_case",
+    rename_all = "kebab-case",
+    rename_all_fields = "kebab-case",
     deny_unknown_fields
 )]
 pub enum SchematicStationPort {
@@ -41,7 +47,12 @@ pub enum SchematicStationPort {
 
 /// A route's geometric relationship to an interchange capsule's major axis.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
+#[serde(
+    tag = "type",
+    rename_all = "kebab-case",
+    rename_all_fields = "kebab-case",
+    deny_unknown_fields
+)]
 pub enum SchematicInterchangePort {
     // Empty struct variants make `deny_unknown_fields` apply to fieldless cases.
     MajorAxis {},
@@ -53,7 +64,7 @@ pub enum SchematicInterchangePort {
 
 /// An undirected octilinear axis in SVG coordinates.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "kebab-case")]
 pub enum OctilinearAxis {
     Horizontal,
     FallingDiagonal,

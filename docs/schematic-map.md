@@ -141,10 +141,11 @@ The rotations are visual rotations in the SVG coordinate system. Because an
 `OctilinearAxis` is undirected, rotating either of its two direction
 representatives in the stated direction gives the same resulting axis.
 
-`anchor_count` is the number of perpendicular lines through the capsule. Zero
+`anchor-count` is the number of perpendicular lines through the capsule. Zero
 means that no perpendicular port is valid. One uses `SinglePerpendicular` at
 the centre and does not create an indexed port. A value greater than one uses
-exactly the indexed ports `0..anchor_count`; `SinglePerpendicular`,
+exactly the indexed ports from `0` through `anchor-count - 1`;
+`SinglePerpendicular`,
 `RisingOblique`, and `FallingOblique` are then invalid. Excluding the oblique
 centre ports avoids their conflict with multiple perpendicular lines.
 
@@ -203,7 +204,7 @@ $$
 
 The formula is evaluated only when $k > 1$. When $k = 1$, the one
 perpendicular line uses `SinglePerpendicular` at the capsule centre.
-`anchor_interval` therefore affects geometry only when $k > 1$. The semantic
+`anchor-interval` therefore affects geometry only when $k > 1$. The semantic
 manifest does not store calculated capsule-anchor positions.
 
 ## Prepared schematic
@@ -330,7 +331,7 @@ axes:
 - `PerpendicularAnchor { index }` uses the derived indexed position and the
   axis perpendicular to the major axis.
 
-Every perpendicular port implied by `anchor_count` must be referenced by
+Every perpendicular port implied by `anchor-count` must be referenced by
 exactly one line.
 
 ## Global options
@@ -380,7 +381,7 @@ on input and canonicalises it to `color` on output.
 
 YAML is the primary human-editable format. JSON uses an equivalent schema for
 Web interchange. Every structure rejects unknown fields, enum variants use an
-explicit `type` tag, and field names use `snake_case`.
+explicit `type` tag, and configuration keys and enum values use `kebab-case`.
 
 The semantic schematic manifest is the public authoring contract. Prepared
 geometry is private, derived in memory, and is not a competing semantic source
@@ -393,7 +394,7 @@ during construction and deserialisation.
 
 Documentation prose uses British English. Rust and schema identifiers use
 North American English to follow their surrounding conventions; for example,
-the code uses `SingleLine` and canonical YAML uses `single_line` and `color`.
+the code uses `SingleLine` and canonical YAML uses `single-line` and `color`.
 British `centre` and `colour` spellings are accepted as input aliases.
 
 The `Interchange` station-port variant contains a nested
@@ -448,9 +449,9 @@ stations:
       en: [Central]
     symbol:
       type: capsule
-      axis: rising_diagonal
-      anchor_count: 1
-      anchor_interval: 24.0
+      axis: rising-diagonal
+      anchor-count: 1
+      anchor-interval: 24.0
 
 corners:
   - id: west-corner
@@ -465,17 +466,17 @@ lines:
     paths:
       - visits:
           - type: station
-            station_id: west
+            station-id: west
             port:
-              type: single_line
+              type: single-line
           - type: corner
-            corner_id: west-corner
+            corner-id: west-corner
           - type: station
-            station_id: central
+            station-id: central
             port:
               type: interchange
               interchange:
-                type: single_perpendicular
+                type: single-perpendicular
         closed: false
 ```
 
@@ -495,17 +496,17 @@ Semantic resolution additionally rejects:
 - unreferenced semantic corners;
 - non-finite positions and non-finite or non-positive lengths;
 - a port incompatible with its station symbol;
-- `SinglePerpendicular` when `anchor_count` is not one;
-- `PerpendicularAnchor` when `anchor_count <= 1` or its index is outside
-  `0..anchor_count`;
-- perpendicular-port references that do not match `anchor_count`: none when it
+- `SinglePerpendicular` when `anchor-count` is not one;
+- `PerpendicularAnchor` when `anchor-count <= 1` or its index is not less than
+  `anchor-count`;
+- perpendicular-port references that do not match `anchor-count`: none when it
   is zero, exactly `SinglePerpendicular` when it is one, and every indexed
   `PerpendicularAnchor` exactly once when it is greater than one;
-- `RisingOblique` or `FallingOblique` when `anchor_count > 1`;
+- `RisingOblique` or `FallingOblique` when `anchor-count > 1`;
 - a station port referenced by more than one line;
 - a corner referenced by more than one line;
-- a capsule with multiple indexed anchors whose `anchor_interval` is less than
-  `line_width`;
+- a capsule with multiple indexed anchors whose `anchor-interval` is less than
+  `lines.width`;
 - open semantic paths with fewer than two station visits or endpoints that are
   not station visits;
 - closed semantic paths with fewer than three station visits; and

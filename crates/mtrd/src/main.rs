@@ -799,7 +799,7 @@ lines:
         let output = temporary_path("svg");
         let yaml = SCHEMATIC_YAML.replace(
             "    paths: []",
-            "    paths:\n      - visits:\n          - type: station\n            station_id: central\n            port:\n              type: single_line\n          - type: station\n            station_id: east\n            port:\n              type: single_line\n        closed: false",
+            "    paths:\n      - visits:\n          - type: station\n            station-id: central\n            port:\n              type: single-line\n          - type: station\n            station-id: east\n            port:\n              type: single-line\n        closed: false",
         ).replace(
             "corners: []",
             "  - id: east\n    position: [41.0, 2.0]\n    names: { en: [East] }\n    symbol: { type: circle }\ncorners: []",

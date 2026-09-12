@@ -2,7 +2,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer, ser::SerializeMap}
 
 /// Global visual options used by a topology map.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct TopologyOptions {
     pub background: TopologyBackgroundOptions,
     pub labels: TopologyLabelOptions,
@@ -12,21 +12,21 @@ pub struct TopologyOptions {
 
 /// Global display options for station-name labels.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct TopologyLabelOptions {
     pub hidden: bool,
 }
 
 /// Global styling shared by all metro lines.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct TopologyLineOptions {
     pub width: TopologyLength,
 }
 
 /// Global styling for common and interchange stations.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct TopologyStationOptions {
     pub common: TopologyCommonStationOptions,
     pub interchange: TopologyInterchangeStationOptions,
@@ -34,7 +34,7 @@ pub struct TopologyStationOptions {
 
 /// Styling shared by common stations.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct TopologyCommonStationOptions {
     pub fill: TopologyCommonStationFill,
     pub stroke: TopologyCommonStationStroke,
@@ -42,7 +42,7 @@ pub struct TopologyCommonStationOptions {
 
 /// Fill styling for common stations.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct TopologyCommonStationFill {
     pub diameter: TopologyLength,
     #[serde(alias = "colour")]
@@ -51,7 +51,7 @@ pub struct TopologyCommonStationFill {
 
 /// Stroke styling for common stations.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct TopologyCommonStationStroke {
     pub width: TopologyLength,
     pub alignment: TopologyStrokeAlignment,
@@ -61,7 +61,7 @@ pub struct TopologyCommonStationStroke {
 
 /// Styling shared by interchange stations.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct TopologyInterchangeStationOptions {
     pub fill: TopologyInterchangeStationFill,
     pub stroke: TopologyInterchangeStationStroke,
@@ -69,7 +69,7 @@ pub struct TopologyInterchangeStationOptions {
 
 /// Fill styling for interchange stations.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct TopologyInterchangeStationFill {
     pub width: TopologyLength,
     #[serde(alias = "colour")]
@@ -78,7 +78,7 @@ pub struct TopologyInterchangeStationFill {
 
 /// Stroke styling for interchange stations.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct TopologyInterchangeStationStroke {
     pub width: TopologyLength,
     pub alignment: TopologyStrokeAlignment,
@@ -88,7 +88,12 @@ pub struct TopologyInterchangeStationStroke {
 
 /// How a common-station colour is selected.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "kebab-case", deny_unknown_fields)]
+#[serde(
+    tag = "type",
+    rename_all = "kebab-case",
+    rename_all_fields = "kebab-case",
+    deny_unknown_fields
+)]
 pub enum TopologyStationColor {
     Unified { value: String },
     // The empty struct makes `deny_unknown_fields` apply to this fieldless case.
@@ -97,7 +102,7 @@ pub enum TopologyStationColor {
 
 /// Placement of a station stroke relative to its fill boundary.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "kebab-case")]
 pub enum TopologyStrokeAlignment {
     Inside,
     #[serde(alias = "centre")]
