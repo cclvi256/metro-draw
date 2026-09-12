@@ -12,9 +12,9 @@ const TAPER_LENGTH: f64 = 24.0;
 
 /// Render a topology as an SVG topology graph.
 ///
-/// Manifest positions are treated as Cartesian coordinates, so increasing
-/// `y` is rendered upwards. Each line path is drawn in its configured color;
-/// closed paths are joined back to their first station.
+/// Manifest positions are converted from their configured coordinate system
+/// to rightward and downward axes before rendering. Each line path is drawn in
+/// its configured color; closed paths are joined back to their first station.
 pub fn render_topology_svg(topology: &MetroTopology) -> Result<String, TopologyRenderError> {
     validate_topology(topology)?;
     let stations = station_index(topology)?;
@@ -25,7 +25,7 @@ pub fn render_topology_svg(topology: &MetroTopology) -> Result<String, TopologyR
     if !lane_spacing.is_finite() {
         return Err(TopologyRenderError::CoordinateRange);
     }
-    let bounds = Bounds::from_topology(topology);
+    let bounds = Bounds::from_topology(topology).ok_or(TopologyRenderError::CoordinateRange)?;
     let (width, height) = bounds
         .viewport()
         .ok_or(TopologyRenderError::CoordinateRange)?;
@@ -364,11 +364,12 @@ fn xml_escape(value: &str) -> String {
 mod tests {
     use super::*;
     use crate::{
-        TopologyBackgroundOptions, TopologyCommonStationFill, TopologyCommonStationOptions,
-        TopologyCommonStationStroke, TopologyInterchangeStationFill,
-        TopologyInterchangeStationOptions, TopologyInterchangeStationStroke, TopologyLabelOptions,
-        TopologyLength, TopologyLine, TopologyLineOptions, TopologyOptions, TopologyPath,
-        TopologyPosition, TopologyStationOptions,
+        TopologyBackgroundOptions, TopologyCartesianAxes, TopologyCommonStationFill,
+        TopologyCommonStationOptions, TopologyCommonStationStroke, TopologyCoordinateOptions,
+        TopologyGeographicAxes, TopologyInterchangeStationFill, TopologyInterchangeStationOptions,
+        TopologyInterchangeStationStroke, TopologyLabelOptions, TopologyLength, TopologyLine,
+        TopologyLineOptions, TopologyOptions, TopologyPath, TopologyPosition,
+        TopologyStationOptions,
     };
 
     fn options() -> TopologyOptions {
@@ -376,6 +377,7 @@ mod tests {
             background: TopologyBackgroundOptions::Color {
                 color: "#abcdef".into(),
             },
+            coordinates: Default::default(),
             labels: TopologyLabelOptions { hidden: false },
             lines: TopologyLineOptions {
                 width: TopologyLength::new(8.0).unwrap(),
@@ -472,12 +474,12 @@ mod tests {
     }
 
     #[test]
-    fn renders_paths_stations_labels_and_cartesian_y_axis() {
+    fn renders_paths_stations_labels_and_downward_cartesian_y_axis() {
         let svg = render_topology_svg(&topology()).unwrap();
 
         assert!(svg.starts_with("<svg xmlns=\"http://www.w3.org/2000/svg\""));
         assert!(svg.contains("data-line-id=\"red&quot;line\""));
-        assert!(svg.contains("d=\"M48 208 L208 48\""));
+        assert!(svg.contains("d=\"M48 48 L208 208\""));
         assert!(svg.contains("data-station-id=\"south&amp;west\""));
         assert!(svg.contains(">South &lt;West&gt;</text>"));
         assert!(svg.contains("r=\"9\" fill=\"#fedcba\""));
@@ -486,6 +488,40 @@ mod tests {
             svg.contains("<rect x=\"0\" y=\"0\" width=\"416\" height=\"256\" fill=\"#abcdef\" />")
         );
         assert!(svg.ends_with("</svg>\n"));
+    }
+
+    #[test]
+    fn explicit_right_up_axes_preserve_the_previous_orientation() {
+        let mut topology = topology();
+        topology.options.coordinates = TopologyCoordinateOptions::Cartesian {
+            axes: TopologyCartesianAxes::RightUp,
+        };
+
+        let svg = render_topology_svg(&topology).unwrap();
+
+        assert!(svg.contains("d=\"M48 208 L208 48\""));
+    }
+
+    #[test]
+    fn equivalent_geographic_axes_render_identically() {
+        let mut east_north = topology();
+        east_north.options.coordinates = TopologyCoordinateOptions::Geographic {
+            axes: TopologyGeographicAxes::EastNorth,
+        };
+        east_north.stations[0].position = TopologyPosition { x: -118.0, y: 34.0 };
+        east_north.stations[1].position = TopologyPosition { x: -117.9, y: 34.1 };
+
+        let mut north_west = east_north.clone();
+        north_west.options.coordinates = TopologyCoordinateOptions::Geographic {
+            axes: TopologyGeographicAxes::NorthWest,
+        };
+        north_west.stations[0].position = TopologyPosition { x: 34.0, y: 118.0 };
+        north_west.stations[1].position = TopologyPosition { x: 34.1, y: 117.9 };
+
+        assert_eq!(
+            render_topology_svg(&east_north).unwrap(),
+            render_topology_svg(&north_west).unwrap()
+        );
     }
 
     #[test]

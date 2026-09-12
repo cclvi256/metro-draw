@@ -661,14 +661,15 @@ lines:
 
         convert(&yaml_path, &json_path).unwrap();
         let json = fs::read_to_string(&json_path).unwrap();
-        assert_eq!(
-            MetroTopology::from_json(&json).unwrap().stations[0].id,
-            "central"
-        );
+        let json_value: serde_json::Value = serde_json::from_str(&json).unwrap();
+        assert_eq!(json_value["stations"][0]["id"], "central");
+        assert_eq!(json_value["options"]["coordinates"]["type"], "cartesian");
+        assert_eq!(json_value["options"]["coordinates"]["axes"], "r-d");
 
         convert(&json_path, &round_trip_path).unwrap();
         let yaml = fs::read_to_string(&round_trip_path).unwrap();
         assert!(yaml.contains("position: [1.0, 2.0]"));
+        assert!(yaml.contains("  coordinates:\n    type: cartesian\n    axes: r-d"));
 
         fs::remove_file(yaml_path).unwrap();
         fs::remove_file(json_path).unwrap();
@@ -788,6 +789,33 @@ lines:
         assert!(svg.contains("<svg"));
         assert!(svg.contains("data-line-id=\"red\""));
         assert!(svg.contains("data-station-id=\"central\""));
+
+        fs::remove_file(input).unwrap();
+        fs::remove_file(output).unwrap();
+    }
+
+    #[test]
+    fn checks_and_renders_geographic_topologies() {
+        let input = temporary_path("yaml");
+        let output = temporary_path("svg");
+        let yaml = YAML
+            .replace(
+                "  labels:",
+                "  coordinates:\n    type: geographic\n    axes: n-w\n  labels:",
+            )
+            .replace("position: [1.0, 2.0]", "position: [34.0, 118.0]")
+            .replace("position: [3.0, 4.0]", "position: [34.1, 117.9]");
+        fs::write(&input, yaml).unwrap();
+
+        assert!(
+            check(&input, 0, ManifestKind::Topology)
+                .unwrap()
+                .ends_with(": valid")
+        );
+        render_topology(&input, Some(&output), false).unwrap();
+        let svg = fs::read_to_string(&output).unwrap();
+        assert!(svg.contains("data-line-id=\"red\""));
+        assert!(svg.contains("stroke-width=\"8\""));
 
         fs::remove_file(input).unwrap();
         fs::remove_file(output).unwrap();

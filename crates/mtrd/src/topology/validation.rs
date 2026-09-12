@@ -13,6 +13,15 @@ pub enum TopologyRenderError {
     #[error("station '{station}' has a non-finite position")]
     NonFinitePosition { station: String },
 
+    #[error(
+        "station '{station}' has geographic position outside longitude [-180, 180] and latitude [-90, 90]: [{longitude}, {latitude}]"
+    )]
+    GeographicPositionOutOfRange {
+        station: String,
+        longitude: f64,
+        latitude: f64,
+    },
+
     #[error("station id '{station}' is defined more than once")]
     DuplicateStation { station: String },
 
@@ -87,7 +96,7 @@ pub fn validate_topology(topology: &MetroTopology) -> Result<(), TopologyRenderE
         }
     }
 
-    let bounds = Bounds::from_topology(topology);
+    let bounds = Bounds::from_topology(topology).ok_or(TopologyRenderError::CoordinateRange)?;
     if bounds.viewport().is_none()
         || topology
             .stations
@@ -113,6 +122,18 @@ pub(super) fn station_index(
                 station: station.id.clone(),
             });
         }
+        if let Some((longitude, latitude)) = topology
+            .options
+            .coordinates
+            .longitude_latitude(station.position.x, station.position.y)
+            && (!(-180.0..=180.0).contains(&longitude) || !(-90.0..=90.0).contains(&latitude))
+        {
+            return Err(TopologyRenderError::GeographicPositionOutOfRange {
+                station: station.id.clone(),
+                longitude,
+                latitude,
+            });
+        }
         if stations.insert(station.id.as_str(), station).is_some() {
             return Err(TopologyRenderError::DuplicateStation {
                 station: station.id.clone(),
@@ -125,7 +146,10 @@ pub(super) fn station_index(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{TopologyLine, TopologyOptions, TopologyPath, TopologyPosition};
+    use crate::{
+        TopologyCoordinateOptions, TopologyGeographicAxes, TopologyLine, TopologyOptions,
+        TopologyPath, TopologyPosition,
+    };
 
     fn options() -> TopologyOptions {
         serde_yaml::from_str(
@@ -266,6 +290,27 @@ stations:
                 line: "red\"line".into(),
                 path: 1,
                 station: "south&west".into(),
+            })
+        );
+    }
+
+    #[test]
+    fn validates_decoded_geographic_ranges() {
+        let mut valid = topology();
+        valid.options.coordinates = TopologyCoordinateOptions::Geographic {
+            axes: TopologyGeographicAxes::NorthWest,
+        };
+        valid.stations[0].position = TopologyPosition { x: 34.0, y: 118.0 };
+        valid.stations[1].position = TopologyPosition { x: 34.1, y: 117.9 };
+        assert_eq!(validate_topology(&valid), Ok(()));
+
+        valid.stations[1].position.y = 181.0;
+        assert_eq!(
+            validate_topology(&valid),
+            Err(TopologyRenderError::GeographicPositionOutOfRange {
+                station: "north".into(),
+                longitude: -181.0,
+                latitude: 34.1,
             })
         );
     }

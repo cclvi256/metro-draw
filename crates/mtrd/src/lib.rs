@@ -1,6 +1,6 @@
 //! Core data models for diagrammatic city metro topology and schematic maps.
 //!
-//! Topology coordinates are deliberately abstract Cartesian coordinates.
+//! Topology coordinates may be Cartesian or geographic coordinates.
 //! Schematic coordinates follow SVG's rightward x-axis and downward y-axis.
 //!
 //! YAML is the primary, human-editable manifest format. JSON uses the same
@@ -23,13 +23,13 @@ pub use schematic::{
     render_schematic_svg, validate_schematic,
 };
 pub use topology::{
-    MetroTopology, TopologyBackgroundOptions, TopologyCommonStationFill,
-    TopologyCommonStationOptions, TopologyCommonStationStroke, TopologyInterchangeStationFill,
-    TopologyInterchangeStationOptions, TopologyInterchangeStationStroke, TopologyLabelOptions,
-    TopologyLength, TopologyLine, TopologyLineOptions, TopologyOptions, TopologyPath,
-    TopologyPosition, TopologyRenderError, TopologyStation, TopologyStationColor,
-    TopologyStationOptions, TopologyStrokeAlignment, TopologyValueError, render_topology_svg,
-    validate_topology,
+    MetroTopology, TopologyBackgroundOptions, TopologyCartesianAxes, TopologyCommonStationFill,
+    TopologyCommonStationOptions, TopologyCommonStationStroke, TopologyCoordinateOptions,
+    TopologyGeographicAxes, TopologyInterchangeStationFill, TopologyInterchangeStationOptions,
+    TopologyInterchangeStationStroke, TopologyLabelOptions, TopologyLength, TopologyLine,
+    TopologyLineOptions, TopologyOptions, TopologyPath, TopologyPosition, TopologyRenderError,
+    TopologyStation, TopologyStationColor, TopologyStationOptions, TopologyStrokeAlignment,
+    TopologyValueError, render_topology_svg, validate_topology,
 };
 
 /// Names indexed by a locale such as `en` or `zh-CN`.
