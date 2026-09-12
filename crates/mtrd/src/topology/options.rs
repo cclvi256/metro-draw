@@ -4,9 +4,11 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer, ser::SerializeMap}
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct TopologyOptions {
+    #[serde(default)]
     pub background: TopologyBackgroundOptions,
     #[serde(default)]
     pub coordinates: TopologyCoordinateOptions,
+    #[serde(default)]
     pub labels: TopologyLabelOptions,
     pub lines: TopologyLineOptions,
     #[serde(default)]
@@ -134,9 +136,10 @@ impl TopologyGeographicAxes {
 }
 
 /// Global display options for station-name labels.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct TopologyLabelOptions {
+    #[serde(default)]
     pub hidden: bool,
 }
 
@@ -334,6 +337,14 @@ pub enum TopologyValueError {
 pub enum TopologyBackgroundOptions {
     Color { color: String },
     Transparent,
+}
+
+impl Default for TopologyBackgroundOptions {
+    fn default() -> Self {
+        Self::Color {
+            color: "#FFFFFF".to_owned(),
+        }
+    }
 }
 
 impl Serialize for TopologyBackgroundOptions {

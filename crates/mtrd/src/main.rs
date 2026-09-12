@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use clap::{ArgAction, Parser, Subcommand};
+use clap::{ArgAction, Parser, Subcommand, ValueEnum};
 use thiserror::Error;
 
 use mtrd::{
@@ -20,6 +20,13 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    /// Print an example manifest as YAML.
+    Example {
+        /// Manifest type: topology (t/topo) or schematic (s).
+        #[arg(value_name = "TYPE")]
+        kind: ExampleKind,
+    },
+
     /// Convert a metro topology between YAML and JSON.
     Convert {
         /// Source .yaml, .yml, or .json file.
@@ -89,6 +96,17 @@ enum Command {
         input: PathBuf,
     },
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum ExampleKind {
+    #[value(alias = "t", alias = "topo")]
+    Topology,
+    #[value(alias = "s")]
+    Schematic,
+}
+
+const TOPOLOGY_EXAMPLE: &str = include_str!("../examples/topology.yaml");
+const SCHEMATIC_EXAMPLE: &str = include_str!("../examples/schematic.yaml");
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Format {
@@ -193,6 +211,7 @@ fn main() -> ExitCode {
 
 fn run(cli: Cli) -> Result<String, CliError> {
     match cli.command {
+        Command::Example { kind } => Ok(example(kind).to_owned()),
         Command::Convert { input, output } => {
             convert(&input, &output)?;
             Ok(format!("{} -> {}", input.display(), output.display()))
@@ -228,6 +247,13 @@ fn run(cli: Cli) -> Result<String, CliError> {
             };
             render(&input, output.as_deref(), timestamp, kind)
         }
+    }
+}
+
+fn example(kind: ExampleKind) -> &'static str {
+    match kind {
+        ExampleKind::Topology => TOPOLOGY_EXAMPLE,
+        ExampleKind::Schematic => SCHEMATIC_EXAMPLE,
     }
 }
 
@@ -526,6 +552,34 @@ lines:
                 input
             } if input == Path::new("schematic.yaml")
         ));
+    }
+
+    #[test]
+    fn accepts_every_example_type_alias() {
+        for (value, expected) in [
+            ("t", ExampleKind::Topology),
+            ("topo", ExampleKind::Topology),
+            ("topology", ExampleKind::Topology),
+            ("s", ExampleKind::Schematic),
+            ("schematic", ExampleKind::Schematic),
+        ] {
+            let cli = Cli::try_parse_from(["mtrd", "example", value]).unwrap();
+            assert!(matches!(cli.command, Command::Example { kind } if kind == expected));
+        }
+
+        assert!(Cli::try_parse_from(["mtrd", "example", "unknown"]).is_err());
+    }
+
+    #[test]
+    fn bundled_examples_are_canonical_manifests() {
+        let topology = MetroTopology::from_yaml(example(ExampleKind::Topology)).unwrap();
+        let schematic = SchematicManifest::from_yaml(example(ExampleKind::Schematic)).unwrap();
+
+        assert_eq!(topology.to_yaml().unwrap(), example(ExampleKind::Topology));
+        assert_eq!(
+            schematic.to_yaml().unwrap(),
+            example(ExampleKind::Schematic)
+        );
     }
 
     #[test]

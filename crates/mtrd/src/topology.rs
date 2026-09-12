@@ -376,6 +376,43 @@ lines:
     }
 
     #[test]
+    fn applies_defaults_for_omitted_topology_options() {
+        let yaml = TOPOLOGY_YAML
+            .replace("  background:\n    color: '#ffffff'\n", "")
+            .replace("  labels:\n    hidden: false\n", "");
+        let topology = MetroTopology::from_yaml(&yaml).unwrap();
+        let canonical: serde_yaml::Value =
+            serde_yaml::from_str(&topology.to_yaml().unwrap()).unwrap();
+
+        assert_eq!(
+            topology.options.background,
+            TopologyBackgroundOptions::Color {
+                color: "#FFFFFF".to_owned()
+            }
+        );
+        assert_eq!(
+            topology.options.coordinates,
+            TopologyCoordinateOptions::default()
+        );
+        assert_eq!(topology.options.labels, TopologyLabelOptions::default());
+        assert_eq!(topology.options.scale, TopologyScale::default());
+        assert_eq!(canonical["options"]["background"]["color"], "#FFFFFF");
+        assert_eq!(canonical["options"]["coordinates"]["type"], "cartesian");
+        assert_eq!(canonical["options"]["coordinates"]["axes"], "r-d");
+        assert_eq!(canonical["options"]["labels"]["hidden"], false);
+        assert_eq!(canonical["options"]["scale"], 1.0);
+
+        let empty_labels = yaml.replace("  lines:", "  labels: {}\n  lines:");
+        assert_eq!(
+            MetroTopology::from_yaml(&empty_labels)
+                .unwrap()
+                .options
+                .labels,
+            TopologyLabelOptions::default()
+        );
+    }
+
+    #[test]
     fn rejects_unknown_or_non_boolean_label_options() {
         for invalid in ["    visible: false", "    hidden: 'false'"] {
             let yaml = TOPOLOGY_YAML.replace("    hidden: false", invalid);

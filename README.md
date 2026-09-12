@@ -14,6 +14,13 @@ mtrd -V
 mtrd convert map.yaml map.json
 mtrd convert map.json map.yaml
 
+# Print a bundled example manifest. The short aliases shown are equivalent.
+mtrd example topology
+mtrd example topo
+mtrd example t
+mtrd example schematic
+mtrd example s
+
 # Check topology syntax, schema, and renderability.
 mtrd check -t topology.yaml
 
@@ -75,10 +82,14 @@ the coordinate system and scale, either an opaque background `color` or
 `transparent: true`, the width of line strokes, and the fill and stroke styling
 of common and interchange stations.
 
-Topology coordinates default to Cartesian coordinates with rightward `x` and
-downward `y` axes. The whole `coordinates` mapping may be omitted on input, and
-`axes` may be omitted when `type` is present. If the mapping is present, `type`
-is required:
+Topology `background`, `coordinates`, `labels`, and `scale` may all be omitted
+on input. Their defaults are an opaque `#FFFFFF` background, Cartesian
+coordinates with rightward `x` and downward `y` axes, visible labels
+(`hidden: false`), and a scale of `1.0`. Canonical YAML and JSON include these
+resolved values.
+
+The whole `coordinates` mapping may be omitted, and `axes` may be omitted when
+`type` is present. If the mapping is present, `type` is required:
 
 ```yaml
 options:
@@ -134,6 +145,10 @@ also specified in metres and converted to SVG user units by the global scale.
 Canonical YAML and JSON always include `coordinates`, `type`, and the resolved
 `axes`, including when defaults were omitted on input.
 
+The bundled topology example contains an ordinary line, a branched line, and a
+loop line. Print it with `mtrd example topology`, or inspect
+[`crates/mtrd/examples/topology.yaml`](crates/mtrd/examples/topology.yaml).
+
 An explicit `transparent: false` may accompany a background colour and
 `colour` is accepted on input; canonical output uses `color` and omits the
 redundant transparency field. A coloured background is rendered across the
@@ -173,5 +188,5 @@ library. The `mtrd render -s` CLI is a thin file adapter around that API and
 uses the same output naming options as topology rendering. It draws line
 strokes, rounded explicit corners, circles, and oriented interchange capsules;
 labels, legends, titles, and line marks remain deferred.
-[`examples/schematic.yaml`](examples/schematic.yaml) is a representative
-semantic manifest.
+[`crates/mtrd/examples/schematic.yaml`](crates/mtrd/examples/schematic.yaml) is
+a representative semantic manifest.

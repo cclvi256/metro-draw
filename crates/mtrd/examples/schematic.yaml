@@ -1,0 +1,866 @@
+options:
+  background:
+    color: '#FFFFFF'
+  lines:
+    width: 16.0
+  stations:
+    common:
+      fill:
+        diameter: 20.0
+        color:
+          type: unified
+          value: '#FFFFFF'
+      stroke:
+        width: 4.0
+        alignment: center
+        color:
+          type: follow-line
+    interchange:
+      fill:
+        width: 20.0
+        color: '#FFFFFF'
+      stroke:
+        width: 4.0
+        alignment: outside
+        color: '#000000'
+stations:
+- id: qianhaiwan
+  position: [540.0, 150.0]
+  names:
+    en:
+    - Qianhaiwan
+  symbol:
+    type: capsule
+    axis: horizontal
+    anchor-count: 3
+    anchor-interval: 40.0
+- id: liyumen
+  position: [580.0, 240.0]
+  names:
+    en:
+    - Liyumen
+  symbol:
+    type: circle
+- id: daxin
+  position: [690.0, 350.0]
+  names:
+    en:
+    - Daxin
+  symbol:
+    type: circle
+- id: taoyuan
+  position: [790.0, 350.0]
+  names:
+    en:
+    - Taoyuan
+  symbol:
+    type: capsule
+    axis: vertical
+    anchor-count: 1
+    anchor-interval: 24.0
+- id: shenzhen-university
+  position: [1160.0, 350.0]
+  names:
+    en:
+    - Shenzhen University
+  symbol:
+    type: capsule
+    axis: vertical
+    anchor-count: 1
+    anchor-interval: 24.0
+- id: hi-tech-park
+  position: [1240.0, 350.0]
+  names:
+    en:
+    - Hi-Tech Park
+  symbol:
+    type: circle
+- id: baishizhou
+  position: [1320.0, 350.0]
+  names:
+    en:
+    - Baishizhou
+  symbol:
+    type: circle
+- id: window-of-the-world
+  position: [1410.0, 350.0]
+  names:
+    en:
+    - Window of the World
+  symbol:
+    type: capsule
+    axis: vertical
+    anchor-count: 1
+    anchor-interval: 24.0
+- id: shenkang
+  position: [1410.0, 80.0]
+  names:
+    en:
+    - Shenkang
+  symbol:
+    type: circle
+- id: qiaocheng-north
+  position: [1410.0, 220.0]
+  names:
+    en:
+    - Qiaocheng North
+  symbol:
+    type: circle
+- id: hongshuwan
+  position: [1410.0, 510.0]
+  names:
+    en:
+    - Hongshuwan
+  symbol:
+    type: circle
+- id: keyuan
+  position: [1160.0, 650.0]
+  names:
+    en:
+    - Keyuan
+  symbol:
+    type: capsule
+    axis: vertical
+    anchor-count: 1
+    anchor-interval: 24.0
+- id: houhai
+  position: [1130.0, 780.0]
+  names:
+    en:
+    - Houhai
+  symbol:
+    type: capsule
+    axis: horizontal
+    anchor-count: 2
+    anchor-interval: 60.0
+- id: dengliang
+  position: [1100.0, 950.0]
+  names:
+    en:
+    - Dengliang
+  symbol:
+    type: circle
+- id: haiyue
+  position: [1100.0, 1100.0]
+  names:
+    en:
+    - Haiyue
+  symbol:
+    type: circle
+- id: wanxia
+  position: [1100.0, 1250.0]
+  names:
+    en:
+    - Wanxia
+  symbol:
+    type: circle
+- id: dongjiaotou
+  position: [1000.0, 1350.0]
+  names:
+    en:
+    - Dongjiaotou
+  symbol:
+    type: circle
+- id: shuiwan
+  position: [860.0, 1350.0]
+  names:
+    en:
+    - Shuiwan
+  symbol:
+    type: circle
+- id: sea-world
+  position: [720.0, 1350.0]
+  names:
+    en:
+    - Sea World
+  symbol:
+    type: capsule
+    axis: horizontal
+    anchor-count: 0
+    anchor-interval: 24.0
+- id: shekou-port
+  position: [600.0, 1350.0]
+  names:
+    en:
+    - Shekou Port
+  symbol:
+    type: circle
+- id: chiwan
+  position: [420.0, 1240.0]
+  names:
+    en:
+    - Chiwan
+  symbol:
+    type: capsule
+    axis: rising-diagonal
+    anchor-count: 2
+    anchor-interval: 28.284271247
+- id: guiwan
+  position: [540.0, 350.0]
+  names:
+    en:
+    - Guiwan
+  symbol:
+    type: circle
+- id: qianwan
+  position: [400.0, 600.0]
+  names:
+    en:
+    - Qianwan
+  symbol:
+    type: capsule
+    axis: rising-diagonal
+    anchor-count: 1
+    anchor-interval: 24.0
+- id: qianwan-park
+  position: [330.0, 670.0]
+  names:
+    en:
+    - Qianwan Park
+  symbol:
+    type: circle
+- id: mawan
+  position: [280.0, 820.0]
+  names:
+    en:
+    - Mawan
+  symbol:
+    type: circle
+- id: railway-park
+  position: [280.0, 920.0]
+  names:
+    en:
+    - Railway Park
+  symbol:
+    type: circle
+- id: liwan
+  position: [280.0, 1020.0]
+  names:
+    en:
+    - Liwan
+  symbol:
+    type: circle
+- id: menghai
+  position: [460.0, 660.0]
+  names:
+    en:
+    - Menghai
+  symbol:
+    type: circle
+- id: yihai
+  position: [520.0, 720.0]
+  names:
+    en:
+    - Yihai
+  symbol:
+    type: circle
+- id: litchi-orchards
+  position: [580.0, 780.0]
+  names:
+    en:
+    - Litchi Orchards
+  symbol:
+    type: circle
+- id: nanyou-west
+  position: [650.0, 850.0]
+  names:
+    en:
+    - Nanyou West
+  symbol:
+    type: circle
+- id: nanyou
+  position: [790.0, 900.0]
+  names:
+    en:
+    - Nanyou
+  symbol:
+    type: capsule
+    axis: vertical
+    anchor-count: 1
+    anchor-interval: 24.0
+- id: nanshan-book-mall
+  position: [900.0, 820.0]
+  names:
+    en:
+    - Nanshan Book Mall
+  symbol:
+    type: circle
+- id: shenzhen-university-south
+  position: [900.0, 680.0]
+  names:
+    en:
+    - Shenzhen University South
+  symbol:
+    type: circle
+- id: yuehaimen
+  position: [1160.0, 500.0]
+  names:
+    en:
+    - Yuehaimen
+  symbol:
+    type: capsule
+    axis: vertical
+    anchor-count: 1
+    anchor-interval: 24.0
+- id: high-tech-south
+  position: [1250.0, 550.0]
+  names:
+    en:
+    - High-tech South
+  symbol:
+    type: circle
+- id: hongshuwan-south
+  position: [1460.0, 760.0]
+  names:
+    en:
+    - Hongshuwan South
+  symbol:
+    type: capsule
+    axis: vertical
+    anchor-count: 2
+    anchor-interval: 40.0
+- id: nanshan
+  position: [790.0, 670.0]
+  names:
+    en:
+    - Nanshan
+  symbol:
+    type: capsule
+    axis: falling-diagonal
+    anchor-count: 0
+    anchor-interval: 24.0
+- id: zhongshan-park
+  position: [790.0, 30.0]
+  names:
+    en:
+    - Zhongshan Park
+  symbol:
+    type: circle
+- id: nantou-ancient-city
+  position: [790.0, 210.0]
+  names:
+    en:
+    - Nantou Ancient City
+  symbol:
+    type: circle
+- id: nanguang
+  position: [790.0, 800.0]
+  names:
+    en:
+    - Nanguang
+  symbol:
+    type: circle
+- id: sihai
+  position: [790.0, 1030.0]
+  names:
+    en:
+    - Sihai
+  symbol:
+    type: circle
+- id: huaguoshan
+  position: [790.0, 1130.0]
+  names:
+    en:
+    - Huaguoshan
+  symbol:
+    type: circle
+- id: taiziwan
+  position: [620.0, 1450.0]
+  names:
+    en:
+    - Taiziwan
+  symbol:
+    type: circle
+- id: zuopaotai-east
+  position: [520.0, 1550.0]
+  names:
+    en:
+    - Zuopaotai East
+  symbol:
+    type: circle
+- id: hi-tech-central
+  position: [1160.0, 180.0]
+  names:
+    en:
+    - Hi-Tech Central
+  symbol:
+    type: circle
+- id: talent-park
+  position: [1160.0, 900.0]
+  names:
+    en:
+    - Talent Park
+  symbol:
+    type: circle
+- id: shenzhen-bay-checkpoint
+  position: [1240.0, 1020.0]
+  names:
+    en:
+    - Shenzhen Bay Checkpoint
+  symbol:
+    type: circle
+corners:
+- id: line-1-liyumen-south
+  position: [580.0, 350.0]
+  radius: 60.0
+- id: line-2-chiwan-east
+  position: [550.0, 1350.0]
+  radius: 90.0
+- id: line-2-dongjiaotou-east
+  position: [1100.0, 1350.0]
+  radius: 60.0
+- id: line-2-keyuan-west
+  position: [1100.0, 650.0]
+  radius: 40.0
+- id: line-2-hongshuwan-southwest
+  position: [1410.0, 650.0]
+  radius: 60.0
+- id: line-5-guiwan-south
+  position: [540.0, 460.0]
+  radius: 90.0
+- id: line-5-qianwan-park-south
+  position: [280.0, 720.0]
+  radius: 90.0
+- id: line-5-liwan-south
+  position: [280.0, 1120.0]
+  radius: 90.0
+- id: line-9-nanyou-west-east
+  position: [700.0, 900.0]
+  radius: 90.0
+- id: line-9-nanyou-east
+  position: [900.0, 900.0]
+  radius: 60.0
+- id: line-9-yuehaimen-west
+  position: [900.0, 500.0]
+  radius: 60.0
+- id: line-9-yuehaimen-east
+  position: [1200.0, 500.0]
+  radius: 90.0
+- id: line-9-high-tech-south-southeast
+  position: [1300.0, 600.0]
+  radius: 90.0
+- id: line-9-hongshuwan-south-west
+  position: [1300.0, 740.0]
+  radius: 60.0
+- id: line-11-qianhaiwan-south
+  position: [500.0, 380.0]
+  radius: 120.0
+- id: line-11-nanshan-southeast
+  position: [900.0, 780.0]
+  radius: 120.0
+- id: line-12-huaguoshan-south
+  position: [790.0, 1280.0]
+  radius: 90.0
+- id: line-13-talent-park-south
+  position: [1160.0, 940.0]
+  radius: 90.0
+lines:
+- id: line-1
+  names:
+    en:
+    - Line 1
+  color: '#5ca457'
+  paths:
+  - visits:
+    - type: station
+      station-id: qianhaiwan
+      port:
+        type: interchange
+        interchange:
+          type: perpendicular-anchor
+          index: 2
+    - type: station
+      station-id: liyumen
+      port:
+        type: single-line
+    - type: corner
+      corner-id: line-1-liyumen-south
+    - type: station
+      station-id: daxin
+      port:
+        type: single-line
+    - type: station
+      station-id: taoyuan
+      port:
+        type: interchange
+        interchange:
+          type: single-perpendicular
+    - type: station
+      station-id: shenzhen-university
+      port:
+        type: interchange
+        interchange:
+          type: single-perpendicular
+    - type: station
+      station-id: hi-tech-park
+      port:
+        type: single-line
+    - type: station
+      station-id: baishizhou
+      port:
+        type: single-line
+    - type: station
+      station-id: window-of-the-world
+      port:
+        type: interchange
+        interchange:
+          type: single-perpendicular
+    closed: false
+- id: line-2
+  names:
+    en:
+    - Line 2
+  color: '#a05b37'
+  paths:
+  - visits:
+    - type: station
+      station-id: chiwan
+      port:
+        type: interchange
+        interchange:
+          type: perpendicular-anchor
+          index: 1
+    - type: corner
+      corner-id: line-2-chiwan-east
+    - type: station
+      station-id: shekou-port
+      port:
+        type: single-line
+    - type: station
+      station-id: sea-world
+      port:
+        type: interchange
+        interchange:
+          type: major-axis
+    - type: station
+      station-id: shuiwan
+      port:
+        type: single-line
+    - type: station
+      station-id: dongjiaotou
+      port:
+        type: single-line
+    - type: corner
+      corner-id: line-2-dongjiaotou-east
+    - type: station
+      station-id: wanxia
+      port:
+        type: single-line
+    - type: station
+      station-id: haiyue
+      port:
+        type: single-line
+    - type: station
+      station-id: dengliang
+      port:
+        type: single-line
+    - type: station
+      station-id: houhai
+      port:
+        type: interchange
+        interchange:
+          type: perpendicular-anchor
+          index: 0
+    - type: corner
+      corner-id: line-2-keyuan-west
+    - type: station
+      station-id: keyuan
+      port:
+        type: interchange
+        interchange:
+          type: single-perpendicular
+    - type: corner
+      corner-id: line-2-hongshuwan-southwest
+    - type: station
+      station-id: hongshuwan
+      port:
+        type: single-line
+    - type: station
+      station-id: window-of-the-world
+      port:
+        type: interchange
+        interchange:
+          type: major-axis
+    - type: station
+      station-id: qiaocheng-north
+      port:
+        type: single-line
+    - type: station
+      station-id: shenkang
+      port:
+        type: single-line
+    closed: false
+- id: line-5
+  names:
+    en:
+    - Line 5
+  color: '#8a518c'
+  paths:
+  - visits:
+    - type: station
+      station-id: qianhaiwan
+      port:
+        type: interchange
+        interchange:
+          type: perpendicular-anchor
+          index: 1
+    - type: station
+      station-id: guiwan
+      port:
+        type: single-line
+    - type: corner
+      corner-id: line-5-guiwan-south
+    - type: station
+      station-id: qianwan
+      port:
+        type: interchange
+        interchange:
+          type: major-axis
+    - type: station
+      station-id: qianwan-park
+      port:
+        type: single-line
+    - type: corner
+      corner-id: line-5-qianwan-park-south
+    - type: station
+      station-id: mawan
+      port:
+        type: single-line
+    - type: station
+      station-id: railway-park
+      port:
+        type: single-line
+    - type: station
+      station-id: liwan
+      port:
+        type: single-line
+    - type: corner
+      corner-id: line-5-liwan-south
+    - type: station
+      station-id: chiwan
+      port:
+        type: interchange
+        interchange:
+          type: perpendicular-anchor
+          index: 0
+    closed: false
+- id: line-9
+  names:
+    en:
+    - Line 9
+  color: '#7e6767'
+  paths:
+  - visits:
+    - type: station
+      station-id: qianwan
+      port:
+        type: interchange
+        interchange:
+          type: single-perpendicular
+    - type: station
+      station-id: menghai
+      port:
+        type: single-line
+    - type: station
+      station-id: yihai
+      port:
+        type: single-line
+    - type: station
+      station-id: litchi-orchards
+      port:
+        type: single-line
+    - type: station
+      station-id: nanyou-west
+      port:
+        type: single-line
+    - type: corner
+      corner-id: line-9-nanyou-west-east
+    - type: station
+      station-id: nanyou
+      port:
+        type: interchange
+        interchange:
+          type: single-perpendicular
+    - type: corner
+      corner-id: line-9-nanyou-east
+    - type: station
+      station-id: nanshan-book-mall
+      port:
+        type: single-line
+    - type: station
+      station-id: shenzhen-university-south
+      port:
+        type: single-line
+    - type: corner
+      corner-id: line-9-yuehaimen-west
+    - type: station
+      station-id: yuehaimen
+      port:
+        type: interchange
+        interchange:
+          type: single-perpendicular
+    - type: corner
+      corner-id: line-9-yuehaimen-east
+    - type: station
+      station-id: high-tech-south
+      port:
+        type: single-line
+    - type: corner
+      corner-id: line-9-high-tech-south-southeast
+    - type: corner
+      corner-id: line-9-hongshuwan-south-west
+    - type: station
+      station-id: hongshuwan-south
+      port:
+        type: interchange
+        interchange:
+          type: perpendicular-anchor
+          index: 0
+    closed: false
+- id: line-11
+  names:
+    en:
+    - Line 11
+  color: '#572d37'
+  paths:
+  - visits:
+    - type: station
+      station-id: qianhaiwan
+      port:
+        type: interchange
+        interchange:
+          type: perpendicular-anchor
+          index: 0
+    - type: corner
+      corner-id: line-11-qianhaiwan-south
+    - type: station
+      station-id: nanshan
+      port:
+        type: interchange
+        interchange:
+          type: major-axis
+    - type: corner
+      corner-id: line-11-nanshan-southeast
+    - type: station
+      station-id: houhai
+      port:
+        type: interchange
+        interchange:
+          type: major-axis
+    - type: station
+      station-id: hongshuwan-south
+      port:
+        type: interchange
+        interchange:
+          type: perpendicular-anchor
+          index: 1
+    closed: false
+- id: line-12
+  names:
+    en:
+    - Line 12
+  color: '#8c7d8d'
+  paths:
+  - visits:
+    - type: station
+      station-id: zhongshan-park
+      port:
+        type: single-line
+    - type: station
+      station-id: nantou-ancient-city
+      port:
+        type: single-line
+    - type: station
+      station-id: taoyuan
+      port:
+        type: interchange
+        interchange:
+          type: major-axis
+    - type: station
+      station-id: nanshan
+      port:
+        type: interchange
+        interchange:
+          type: falling-oblique
+    - type: station
+      station-id: nanguang
+      port:
+        type: single-line
+    - type: station
+      station-id: nanyou
+      port:
+        type: interchange
+        interchange:
+          type: major-axis
+    - type: station
+      station-id: sihai
+      port:
+        type: single-line
+    - type: station
+      station-id: huaguoshan
+      port:
+        type: single-line
+    - type: corner
+      corner-id: line-12-huaguoshan-south
+    - type: station
+      station-id: sea-world
+      port:
+        type: interchange
+        interchange:
+          type: rising-oblique
+    - type: station
+      station-id: taiziwan
+      port:
+        type: single-line
+    - type: station
+      station-id: zuopaotai-east
+      port:
+        type: single-line
+    closed: false
+- id: line-13
+  names:
+    en:
+    - Line 13
+  color: '#c17f40'
+  paths:
+  - visits:
+    - type: station
+      station-id: hi-tech-central
+      port:
+        type: single-line
+    - type: station
+      station-id: shenzhen-university
+      port:
+        type: interchange
+        interchange:
+          type: major-axis
+    - type: station
+      station-id: yuehaimen
+      port:
+        type: interchange
+        interchange:
+          type: major-axis
+    - type: station
+      station-id: keyuan
+      port:
+        type: interchange
+        interchange:
+          type: major-axis
+    - type: station
+      station-id: houhai
+      port:
+        type: interchange
+        interchange:
+          type: perpendicular-anchor
+          index: 1
+    - type: station
+      station-id: talent-park
+      port:
+        type: single-line
+    - type: corner
+      corner-id: line-13-talent-park-south
+    - type: station
+      station-id: shenzhen-bay-checkpoint
+      port:
+        type: single-line
+    closed: false
