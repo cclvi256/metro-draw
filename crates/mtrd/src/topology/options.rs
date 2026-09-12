@@ -235,8 +235,9 @@ pub enum TopologyStrokeAlignment {
 
 /// A finite, strictly positive topology rendering length.
 ///
-/// Geographic topology lengths are metres. Cartesian topology lengths retain
-/// their existing SVG-user-unit interpretation.
+/// Geographic topology lengths are metres. Cartesian topology lengths use the
+/// same unit as Cartesian station coordinates. The global coordinate scale
+/// converts either unit to SVG user units.
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct TopologyLength(f64);
 

@@ -96,10 +96,10 @@ options:
   scale: 3.0
 ```
 
-The scale must be finite and strictly positive. It changes coordinate spacing,
-but does not multiply line widths or station styling lengths. Canonical YAML
-and JSON always include the resolved scale, including when it was omitted on
-input.
+The scale must be finite and strictly positive. It multiplies coordinate
+spacing, line widths, and common/interchange station fill and stroke lengths.
+Canonical YAML and JSON always include the resolved scale, including when it
+was omitted on input.
 
 Cartesian axes may be `r-d`, `r-u`, `l-d`, `l-u`, `d-r`, `d-l`, `u-r`, or
 `u-l`. Each letter gives the positive direction of the corresponding value in
@@ -127,9 +127,9 @@ average as the centre, and applies a local equirectangular projection with the
 IUGG mean Earth radius of `6,371,008.8 m`. Longitude is scaled by the cosine of
 the centre latitude. The north-west projected boundary becomes `(0, 0)` in the
 renderer's right/down coordinate system. Antimeridian wrapping is not applied.
-At the default scale, one projected metre is one SVG user unit. Topology line
-widths and common/interchange station fill and stroke lengths remain SVG user
-units when the coordinate scale is changed.
+At the default scale, one projected metre is one SVG user unit. Geographic
+topology line widths and common/interchange station fill and stroke lengths are
+also specified in metres and converted to SVG user units by the global scale.
 
 Canonical YAML and JSON always include `coordinates`, `type`, and the resolved
 `axes`, including when defaults were omitted on input.

@@ -20,7 +20,8 @@ pub fn render_topology_svg(topology: &MetroTopology) -> Result<String, TopologyR
     let stations = station_index(topology)?;
     let station_lines = station_lines(topology);
     let segment_lanes = segment_lanes(topology);
-    let line_width = topology.options.lines.width.get();
+    let scale = topology.options.scale.get();
+    let line_width = topology.options.lines.width.get() * scale;
     let lane_spacing = lane_spacing(line_width);
     if !lane_spacing.is_finite() {
         return Err(TopologyRenderError::CoordinateRange);
@@ -128,19 +129,19 @@ pub fn render_topology_svg(topology: &MetroTopology) -> Result<String, TopologyR
         let (diameter, fill, stroke, stroke_width, stroke_alignment) = if line_indexes.len() > 1 {
             let options = &topology.options.stations.interchange;
             (
-                options.fill.width.get().max(line_width),
+                (options.fill.width.get() * scale).max(line_width),
                 options.fill.color.as_str(),
                 options.stroke.color.as_str(),
-                options.stroke.width.get(),
+                options.stroke.width.get() * scale,
                 options.stroke.alignment,
             )
         } else {
             let options = &topology.options.stations.common;
             (
-                options.fill.diameter.get().max(line_width),
+                (options.fill.diameter.get() * scale).max(line_width),
                 station_color(topology, line_indexes, &options.fill.color),
                 station_color(topology, line_indexes, &options.stroke.color),
-                options.stroke.width.get(),
+                options.stroke.width.get() * scale,
                 options.stroke.alignment,
             )
         };
@@ -382,7 +383,7 @@ mod tests {
             lines: TopologyLineOptions {
                 width: TopologyLength::new(8.0).unwrap(),
             },
-            scale: TopologyScale::new(80.0).unwrap(),
+            scale: Default::default(),
             stations: TopologyStationOptions {
                 common: TopologyCommonStationOptions {
                     fill: TopologyCommonStationFill {
@@ -419,12 +420,12 @@ mod tests {
                 TopologyStation {
                     id: "south&west".into(),
                     names: [("en".into(), vec!["South <West>".into()])].into(),
-                    position: TopologyPosition { x: -1.0, y: 1.0 },
+                    position: TopologyPosition { x: -80.0, y: 80.0 },
                 },
                 TopologyStation {
                     id: "north".into(),
                     names: [("en".into(), vec!["North".into()])].into(),
-                    position: TopologyPosition { x: 1.0, y: 3.0 },
+                    position: TopologyPosition { x: 80.0, y: 240.0 },
                 },
             ],
             lines: vec![TopologyLine {
@@ -449,7 +450,7 @@ mod tests {
             TopologyStation {
                 id: "b".into(),
                 names: Default::default(),
-                position: TopologyPosition { x: 2.0, y: 0.0 },
+                position: TopologyPosition { x: 160.0, y: 0.0 },
             },
         ];
         let lines = (0..line_count)
@@ -543,6 +544,33 @@ mod tests {
         let svg = render_topology_svg(&topology).unwrap();
 
         assert!(svg.contains("stroke=\"#f00\" stroke-width=\"12\""));
+    }
+
+    #[test]
+    fn scales_line_and_station_lengths() {
+        let mut common = topology();
+        common.options.scale = TopologyScale::new(0.1).unwrap();
+        common.options.lines.width = TopologyLength::new(80.0).unwrap();
+        common.options.stations.common.fill.diameter = TopologyLength::new(100.0).unwrap();
+        common.options.stations.common.stroke.width = TopologyLength::new(25.0).unwrap();
+        common.options.stations.common.stroke.alignment = TopologyStrokeAlignment::Outside;
+
+        let svg = render_topology_svg(&common).unwrap();
+
+        assert!(svg.contains("stroke=\"#f00\" stroke-width=\"8\""));
+        assert!(svg.contains("r=\"5\" fill=\"#fedcba\""));
+        assert!(svg.contains("r=\"6.25\" fill=\"none\" stroke=\"#f00\" stroke-width=\"2.5\""));
+
+        let mut interchange = horizontal_shared_topology(2);
+        interchange.options.scale = TopologyScale::new(0.1).unwrap();
+        interchange.options.lines.width = TopologyLength::new(80.0).unwrap();
+        interchange.options.stations.interchange.fill.width = TopologyLength::new(125.0).unwrap();
+        interchange.options.stations.interchange.stroke.width = TopologyLength::new(25.0).unwrap();
+
+        let svg = render_topology_svg(&interchange).unwrap();
+
+        assert!(svg.contains("r=\"6.25\" fill=\"#eeeeee\""));
+        assert!(svg.contains("r=\"7.5\" fill=\"none\" stroke=\"#111111\" stroke-width=\"2.5\""));
     }
 
     #[test]
